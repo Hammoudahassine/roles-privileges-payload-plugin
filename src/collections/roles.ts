@@ -29,7 +29,9 @@ const ensureSuperAdminDontGetDeleted: CollectionBeforeDeleteHook = async ({ req,
   })
 
   if (role && role.slug === 'super-admin') {
-    throw new Error('Cannot delete the Super Admin role')
+    throw new Error(
+      (req.t as (key: string) => string)('plugin-roles-privileges:error-cannot-delete-super-admin'),
+    )
   }
 }
 
@@ -39,10 +41,15 @@ const ensureSuperAdminDontGetDeleted: CollectionBeforeDeleteHook = async ({ req,
 const ensureSuperAdminDontGetUpdated: CollectionBeforeChangeHook = async ({
   data,
   originalDoc,
+  req,
 }) => {
   if (originalDoc && originalDoc.slug === 'super-admin') {
     if (data.slug && data.slug !== 'super-admin') {
-      throw new Error('Cannot modify the Super Admin role slug')
+      throw new Error(
+        (req.t as (key: string) => string)(
+          'plugin-roles-privileges:error-cannot-modify-super-admin-slug',
+        ),
+      )
     }
   }
   return data
@@ -59,8 +66,10 @@ export const createRolesCollection = (
   return {
     slug: 'roles',
     labels: {
-      singular: { en: 'Role', fr: 'Rôle' },
-      plural: { en: 'Roles', fr: 'Rôles' },
+      singular: ({ t }) =>
+        (t as (key: string) => string)('plugin-roles-privileges:roles-collection-label-singular'),
+      plural: ({ t }) =>
+        (t as (key: string) => string)('plugin-roles-privileges:roles-collection-label-plural'),
     },
     access: {
       // Allow authenticated users to read roles (needed for user role resolution)
@@ -79,25 +88,19 @@ export const createRolesCollection = (
         name: 'title',
         type: 'text',
         required: true,
-        label: {
-          en: 'Role Title',
-          fr: 'Titre du rôle',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-title-label'),
       },
       {
         name: 'slug',
         type: 'text',
         required: true,
         unique: true,
-        label: {
-          en: 'Slug',
-          fr: 'Slug',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-slug-label'),
         admin: {
-          description: {
-            en: 'Unique identifier for this role',
-            fr: 'Identifiant unique pour ce rôle',
-          },
+          description: ({ t }) =>
+            (t as (key: string) => string)('plugin-roles-privileges:roles-field-slug-description'),
         },
         hooks: {
           beforeValidate: [
@@ -116,15 +119,13 @@ export const createRolesCollection = (
       {
         name: 'privileges',
         type: 'array',
-        label: {
-          en: 'Privileges',
-          fr: 'Privilèges',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-privileges-label'),
         admin: {
-          description: {
-            en: 'Select the privileges this role should have',
-            fr: 'Sélectionnez les privilèges que ce rôle devrait avoir',
-          },
+          description: ({ t }) =>
+            (t as (key: string) => string)(
+              'plugin-roles-privileges:roles-field-privileges-description',
+            ),
           components: {
             Field: {
               path: 'roles-privileges-payload-plugin/client#PrivilegesSelect',
@@ -141,25 +142,23 @@ export const createRolesCollection = (
             name: 'privilege',
             type: 'text',
             required: true,
-            label: {
-              en: 'Privilege',
-              fr: 'Privilège',
-            },
+            label: ({ t }) =>
+              (t as (key: string) => string)(
+                'plugin-roles-privileges:roles-field-privileges-label',
+              ),
           },
         ],
       },
       {
         name: 'description',
         type: 'textarea',
-        label: {
-          en: 'Description',
-          fr: 'Description',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-description-label'),
         admin: {
-          description: {
-            en: 'Optional description of this role',
-            fr: 'Description optionnelle de ce rôle',
-          },
+          description: ({ t }) =>
+            (t as (key: string) => string)(
+              'plugin-roles-privileges:roles-field-description-description',
+            ),
         },
       },
     ],

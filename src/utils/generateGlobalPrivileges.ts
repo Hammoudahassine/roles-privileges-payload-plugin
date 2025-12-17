@@ -25,6 +25,10 @@ export interface GlobalPrivilege {
  */
 export interface GlobalPrivileges {
   globalSlug: string
+  globalLabel: {
+    en: string
+    fr: string
+  }
   description: {
     en: string
     fr: string
@@ -147,6 +151,7 @@ export const generateGlobalPrivileges = (global: GlobalConfig): GlobalPrivileges
 
   const globalPrivileges: GlobalPrivileges = {
     globalSlug: global.slug,
+    globalLabel: label,
     description: {
       en: `Manage ${label.en.toLowerCase()} global settings`,
       fr: `Gérer les paramètres globaux de ${label.fr.toLowerCase()}`,

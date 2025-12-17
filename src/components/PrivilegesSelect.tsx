@@ -53,11 +53,11 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
   // Get selected data
   const selectedCollection =
     selectedType === 'collection' && selectedSlug
-      ? collectionsArray.find((c) => c.collectionSlug === selectedSlug)
+      ? collectionsArray.find((c: CollectionPrivileges) => c.collectionSlug === selectedSlug)
       : null
   const selectedGlobal =
     selectedType === 'global' && selectedSlug
-      ? globalsArray.find((g) => g.globalSlug === selectedSlug)
+      ? globalsArray.find((g: GlobalPrivileges) => g.globalSlug === selectedSlug)
       : null
 
   /**
@@ -78,7 +78,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
     (privilegeKey: string) => {
       // Check collections
       for (const collection of collectionsArray) {
-        for (const privilege of Object.values(collection.privileges)) {
+        for (const privilege of Object.values(collection.privileges) as Privilege[]) {
           if (privilege.privilegeKey === privilegeKey) {
             return privilege.label[locale]
           }
@@ -86,7 +86,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
       }
       // Check globals
       for (const global of globalsArray) {
-        for (const privilege of Object.values(global.privileges)) {
+        for (const privilege of Object.values(global.privileges) as GlobalPrivilege[]) {
           if (privilege.privilegeKey === privilegeKey) {
             return privilege.label[locale]
           }
@@ -191,11 +191,13 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   color: 'var(--theme-elevation-800)',
                 }}
               >
-                Collections & Globals
+                {(i18n.t as (key: string) => string)(
+                  'plugin-roles-privileges:privileges-column-collections-globals',
+                )}
               </h4>
             </div>
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {collectionsArray.map((collection) => {
+              {collectionsArray.map((collection: CollectionPrivileges) => {
                 const isSelected =
                   selectedType === 'collection' && selectedSlug === collection.collectionSlug
                 return (
@@ -228,14 +230,16 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ textTransform: 'capitalize' }}>
-                        📦 {collection.collectionSlug.replace(/-/g, ' ')}
+                      <span>
+                        📦{' '}
+                        {collection.collectionLabel?.[locale] ||
+                          collection.collectionSlug.replace(/-/g, ' ')}
                       </span>
                     </div>
                   </button>
                 )
               })}
-              {globalsArray.map((global) => {
+              {globalsArray.map((global: GlobalPrivileges) => {
                 const isSelected = selectedType === 'global' && selectedSlug === global.globalSlug
                 return (
                   <button
@@ -267,8 +271,8 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ textTransform: 'capitalize' }}>
-                        🌐 {global.globalSlug.replace(/-/g, ' ')}
+                      <span>
+                        🌐 {global.globalLabel?.[locale] || global.globalSlug.replace(/-/g, ' ')}
                       </span>
                     </div>
                   </button>
@@ -296,13 +300,17 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   color: 'var(--theme-elevation-800)',
                 }}
               >
-                Privileges
+                {(i18n.t as (key: string) => string)(
+                  'plugin-roles-privileges:privileges-column-privileges',
+                )}
               </h4>
             </div>
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
               {selectedCollection || selectedGlobal ? (
-                Object.values(
-                  selectedCollection ? selectedCollection.privileges : selectedGlobal!.privileges,
+                (
+                  Object.values(
+                    selectedCollection ? selectedCollection.privileges : selectedGlobal!.privileges,
+                  ) as (Privilege | GlobalPrivilege)[]
                 ).map((privilege) => {
                   const isSelected = isPrivilegeSelected(privilege.privilegeKey)
                   return (
@@ -363,7 +371,9 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                     textAlign: 'center',
                   }}
                 >
-                  Select a collection or global to view privileges
+                  {(i18n.t as (key: string) => string)(
+                    'plugin-roles-privileges:privileges-select-placeholder',
+                  )}
                 </div>
               )}
             </div>
@@ -388,7 +398,9 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   color: 'var(--theme-elevation-800)',
                 }}
               >
-                Description
+                {(i18n.t as (key: string) => string)(
+                  'plugin-roles-privileges:privileges-column-description',
+                )}
               </h4>
             </div>
             <div style={{ padding: '16px', maxHeight: '400px', overflowY: 'auto' }}>
@@ -435,10 +447,11 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                       fontSize: '16px',
                       fontWeight: 600,
                       color: 'var(--theme-elevation-1000)',
-                      textTransform: 'capitalize',
                     }}
                   >
-                    📦 {selectedCollection.collectionSlug.replace(/-/g, ' ')}
+                    📦{' '}
+                    {selectedCollection.collectionLabel?.[locale] ||
+                      selectedCollection.collectionSlug.replace(/-/g, ' ')}
                   </h5>
                   {/* <p
                     style={{
@@ -459,10 +472,11 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                       fontSize: '16px',
                       fontWeight: 600,
                       color: 'var(--theme-elevation-1000)',
-                      textTransform: 'capitalize',
                     }}
                   >
-                    🌐 {selectedGlobal.globalSlug.replace(/-/g, ' ')}
+                    🌐{' '}
+                    {selectedGlobal.globalLabel?.[locale] ||
+                      selectedGlobal.globalSlug.replace(/-/g, ' ')}
                   </h5>
                   {/* <p
                     style={{
@@ -484,7 +498,9 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                     textAlign: 'center',
                   }}
                 >
-                  Select a privilege to view its description
+                  {(i18n.t as (key: string) => string)(
+                    'plugin-roles-privileges:privileges-select-privilege-placeholder',
+                  )}
                 </p>
               )}
             </div>
@@ -510,7 +526,10 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
               color: 'var(--theme-elevation-1000)',
             }}
           >
-            Selected Privileges ({existingPrivileges.length})
+            {(i18n.t as (key: string) => string)(
+              'plugin-roles-privileges:privileges-selected-count',
+            )}{' '}
+            ({existingPrivileges.length})
           </h5>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {existingPrivileges.map((privilegeKey, index) => (

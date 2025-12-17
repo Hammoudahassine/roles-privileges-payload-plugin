@@ -1,5 +1,8 @@
+import type { AcceptedLanguages } from '@payloadcms/translations'
 import type { Config } from 'payload'
 import { createRolesCollection } from './collections/roles.js'
+import { translations } from './translations/index.js'
+import type { PluginDefaultTranslationsObject } from './translations/types.js'
 import {
   allGlobalPrivilegesMap,
   generateGlobalPrivilegeKey,
@@ -83,19 +86,13 @@ export const rolesPrivilegesPayloadPlugin =
     // Step 3: Extract collections and globals data with privileges for the UI
     const collectionsData = Array.from(allPrivilegesMap.values()).map((collectionPrivileges) => ({
       collectionSlug: collectionPrivileges.collectionSlug,
-      collectionLabel: {
-        en: collectionPrivileges.collectionSlug,
-        fr: collectionPrivileges.collectionSlug,
-      },
+      collectionLabel: collectionPrivileges.collectionLabel,
       privileges: collectionPrivileges.privileges,
     }))
 
     const globalsData = Array.from(allGlobalPrivilegesMap.values()).map((globalPrivileges) => ({
       globalSlug: globalPrivileges.globalSlug,
-      globalLabel: {
-        en: globalPrivileges.globalSlug,
-        fr: globalPrivileges.globalSlug,
-      },
+      globalLabel: globalPrivileges.globalLabel,
       privileges: globalPrivileges.privileges,
     }))
 
@@ -250,6 +247,36 @@ export const rolesPrivilegesPayloadPlugin =
         await seedSuperAdminRole(payload)
       }
     }
+
+    // Step 8: Add plugin translations to config
+    if (!config.i18n?.translations) {
+      if (!config.i18n) {
+        config.i18n = {}
+      }
+      config.i18n.translations = {}
+    }
+
+    // Merge plugin translations with existing translations
+    Object.keys(translations).forEach((locale) => {
+      const typedLocale = locale as AcceptedLanguages
+      const pluginI18nObject = translations[typedLocale]
+
+      if (!config.i18n?.translations?.[typedLocale]) {
+        config.i18n!.translations![typedLocale] = {}
+      }
+
+      if (!('plugin-roles-privileges' in (config.i18n!.translations![typedLocale] || {}))) {
+        ;(config.i18n!.translations![typedLocale] as PluginDefaultTranslationsObject)[
+          'plugin-roles-privileges'
+        ] = {} as PluginDefaultTranslationsObject['plugin-roles-privileges']
+      }
+
+      ;(config.i18n!.translations![typedLocale] as PluginDefaultTranslationsObject)[
+        'plugin-roles-privileges'
+      ] = {
+        ...pluginI18nObject['plugin-roles-privileges'],
+      }
+    })
 
     return config
   }

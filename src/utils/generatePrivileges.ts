@@ -25,6 +25,10 @@ export interface Privilege {
  */
 export interface CollectionPrivileges {
   collectionSlug: string
+  collectionLabel: {
+    en: string
+    fr: string
+  }
   description: {
     en: string
     fr: string
@@ -194,6 +198,7 @@ export const generateCollectionPrivileges = (
 
   const collectionPrivileges: CollectionPrivileges = {
     collectionSlug: collection.slug,
+    collectionLabel: pluralLabel,
     description: {
       en: `Manage ${pluralLabel.en.toLowerCase()} in the system`,
       fr: `Gérer ${pluralLabel.fr.toLowerCase()} dans le système`,
