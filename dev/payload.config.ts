@@ -8,7 +8,6 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { testEmailAdapter } from './helpers/testEmailAdapter.js'
-import { seed } from './seed.js'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -138,6 +137,7 @@ const buildConfigWithMemoryDB = async () => {
     editor: lexicalEditor(),
     email: testEmailAdapter,
     onInit: async (payload) => {
+      const { seed } = await import('./seed.js')
       await seed(payload)
     },
     plugins: [

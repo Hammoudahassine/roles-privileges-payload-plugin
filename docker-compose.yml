@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: roles-privileges-mongodb
+    restart: unless-stopped
+    ports:
+      - '27037:27017'
+    environment:
+      MONGO_INITDB_DATABASE: roles-privileges-dev
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local

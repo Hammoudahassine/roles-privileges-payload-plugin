@@ -3,16 +3,37 @@ import type { ArrayFieldClientComponent } from 'payload'
 
 import { useField, useForm, useFormFields, useTranslation } from '@payloadcms/ui'
 import { memo, useCallback, useState } from 'react'
-import { allGlobalPrivilegesMap, type GlobalPrivilege } from '../utils/generateGlobalPrivileges.js'
-import { allPrivilegesMap, type Privilege } from '../utils/generatePrivileges.js'
+import type { GlobalPrivilege } from '../utils/generateGlobalPrivileges.js'
+import type { Privilege } from '../utils/generatePrivileges.js'
+
+type CollectionPrivileges = {
+  collectionSlug: string
+  collectionLabel: { en: string; fr: string }
+  privileges: Record<string, Privilege>
+}
+
+type GlobalPrivileges = {
+  globalSlug: string
+  globalLabel: { en: string; fr: string }
+  privileges: Record<string, GlobalPrivilege>
+}
+
+type PrivilegesSelectProps = {
+  path: string
+  collections: CollectionPrivileges[]
+  globals: GlobalPrivileges[]
+}
 
 /**
  * Custom array field component for managing privileges in Payload CMS
  * @component
  * @param {Object} props - Component props from Payload CMS
  * @param {string} props.path - Path to the field in the form
+ * @param {CollectionPrivileges[]} props.collections - Collections with their privileges
+ * @param {GlobalPrivileges[]} props.globals - Globals with their privileges
  */
-const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
+const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
+  const { path, collections = [], globals = [] } = props as any
   const { rows } = useField({ path, hasRows: true })
   const { addFieldRow, removeFieldRow, setModified } = useForm()
   const { dispatch } = useFormFields(([_, dispatch]) => ({ dispatch }))
@@ -25,15 +46,19 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
     null,
   )
 
-  // Convert maps to arrays for rendering
-  const collectionsArray = Array.from(allPrivilegesMap.values())
-  const globalsArray = Array.from(allGlobalPrivilegesMap.values())
+  // Use the collections and globals from props
+  const collectionsArray = collections
+  const globalsArray = globals
 
   // Get selected data
   const selectedCollection =
-    selectedType === 'collection' && selectedSlug ? allPrivilegesMap.get(selectedSlug) : null
+    selectedType === 'collection' && selectedSlug
+      ? collectionsArray.find((c) => c.collectionSlug === selectedSlug)
+      : null
   const selectedGlobal =
-    selectedType === 'global' && selectedSlug ? allGlobalPrivilegesMap.get(selectedSlug) : null
+    selectedType === 'global' && selectedSlug
+      ? globalsArray.find((g) => g.globalSlug === selectedSlug)
+      : null
 
   /**
    * Get existing privilege values from form fields
@@ -52,7 +77,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
   const getPrivilegeLabel = useCallback(
     (privilegeKey: string) => {
       // Check collections
-      for (const collection of allPrivilegesMap.values()) {
+      for (const collection of collectionsArray) {
         for (const privilege of Object.values(collection.privileges)) {
           if (privilege.privilegeKey === privilegeKey) {
             return privilege.label[locale]
@@ -60,7 +85,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
         }
       }
       // Check globals
-      for (const global of allGlobalPrivilegesMap.values()) {
+      for (const global of globalsArray) {
         for (const privilege of Object.values(global.privileges)) {
           if (privilege.privilegeKey === privilegeKey) {
             return privilege.label[locale]
@@ -69,7 +94,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
       }
       return privilegeKey
     },
-    [locale],
+    [collectionsArray, globalsArray, locale],
   )
 
   /**
@@ -415,7 +440,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
                   >
                     📦 {selectedCollection.collectionSlug.replace(/-/g, ' ')}
                   </h5>
-                  <p
+                  {/* <p
                     style={{
                       margin: 0,
                       fontSize: '13px',
@@ -424,7 +449,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
                     }}
                   >
                     {selectedCollection.description[locale]}
-                  </p>
+                  </p> */}
                 </div>
               ) : selectedGlobal ? (
                 <div>
@@ -439,7 +464,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
                   >
                     🌐 {selectedGlobal.globalSlug.replace(/-/g, ' ')}
                   </h5>
-                  <p
+                  {/* <p
                     style={{
                       margin: 0,
                       fontSize: '13px',
@@ -448,7 +473,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
                     }}
                   >
                     {selectedGlobal.description[locale]}
-                  </p>
+                  </p> */}
                 </div>
               ) : (
                 <p
@@ -534,3 +559,4 @@ const PrivilegesSelect: ArrayFieldClientComponent = ({ path }) => {
 }
 
 export default memo(PrivilegesSelect)
+export type { CollectionPrivileges, GlobalPrivileges }

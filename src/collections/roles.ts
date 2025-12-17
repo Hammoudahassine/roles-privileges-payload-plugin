@@ -3,7 +3,21 @@ import type {
   CollectionBeforeDeleteHook,
   CollectionConfig,
 } from 'payload'
+import type { GlobalPrivilege } from '../utils/generateGlobalPrivileges.js'
+import type { Privilege } from '../utils/generatePrivileges.js'
 import { hasPrivilege } from '../utils/privilegesAccess.js'
+
+type CollectionData = {
+  collectionSlug: string
+  collectionLabel: { en: string; fr: string }
+  privileges: Record<string, Privilege>
+}
+
+type GlobalData = {
+  globalSlug: string
+  globalLabel: { en: string; fr: string }
+  privileges: Record<string, GlobalPrivilege>
+}
 
 /**
  * Hook to ensure the Super Admin role cannot be deleted
@@ -38,7 +52,10 @@ const ensureSuperAdminDontGetUpdated: CollectionBeforeChangeHook = async ({
  * Roles collection configuration
  * This collection manages user roles and their associated privileges
  */
-export const createRolesCollection = (): CollectionConfig => {
+export const createRolesCollection = (
+  collections?: CollectionData[],
+  globals?: GlobalData[],
+): CollectionConfig => {
   return {
     slug: 'roles',
     labels: {
@@ -109,7 +126,13 @@ export const createRolesCollection = (): CollectionConfig => {
             fr: 'Sélectionnez les privilèges que ce rôle devrait avoir',
           },
           components: {
-            Field: 'roles-privileges-payload-plugin/client#PrivilegesSelect',
+            Field: {
+              path: 'roles-privileges-payload-plugin/client#PrivilegesSelect',
+              clientProps: {
+                collections: collections || [],
+                globals: globals || [],
+              },
+            },
           },
         },
         minRows: 1,

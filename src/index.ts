@@ -1,10 +1,15 @@
 import type { Config } from 'payload'
 import { createRolesCollection } from './collections/roles.js'
 import {
+  allGlobalPrivilegesMap,
   generateGlobalPrivilegeKey,
   generateGlobalPrivileges,
 } from './utils/generateGlobalPrivileges.js'
-import { generateCollectionPrivileges, generatePrivilegeKey } from './utils/generatePrivileges.js'
+import {
+  allPrivilegesMap,
+  generateCollectionPrivileges,
+  generatePrivilegeKey,
+} from './utils/generatePrivileges.js'
 import { hasPrivilege } from './utils/privilegesAccess.js'
 import { seedSuperAdminRole } from './utils/seedSuperAdminRole.js'
 
@@ -75,8 +80,27 @@ export const rolesPrivilegesPayloadPlugin =
       }
     }
 
-    // Step 3: Add the roles collection
-    config.collections.push(createRolesCollection())
+    // Step 3: Extract collections and globals data with privileges for the UI
+    const collectionsData = Array.from(allPrivilegesMap.values()).map((collectionPrivileges) => ({
+      collectionSlug: collectionPrivileges.collectionSlug,
+      collectionLabel: {
+        en: collectionPrivileges.collectionSlug,
+        fr: collectionPrivileges.collectionSlug,
+      },
+      privileges: collectionPrivileges.privileges,
+    }))
+
+    const globalsData = Array.from(allGlobalPrivilegesMap.values()).map((globalPrivileges) => ({
+      globalSlug: globalPrivileges.globalSlug,
+      globalLabel: {
+        en: globalPrivileges.globalSlug,
+        fr: globalPrivileges.globalSlug,
+      },
+      privileges: globalPrivileges.privileges,
+    }))
+
+    // Add the roles collection with privilege data
+    config.collections.push(createRolesCollection(collectionsData, globalsData))
 
     // Step 4: Generate privileges for the roles collection itself
     const rolesCollection = config.collections.find((c) => c.slug === 'roles')
