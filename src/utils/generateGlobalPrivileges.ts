@@ -1,9 +1,9 @@
 import type { GlobalConfig } from 'payload'
 
 /**
- * Available privilege types for global operations (only read and update)
+ * Available privilege types for all global operations
  */
-export type GlobalPrivilegeType = 'read' | 'update'
+export type GlobalPrivilegeType = 'read' | 'readDrafts' | 'readVersions' | 'update'
 
 /**
  * Interface for a single privilege
@@ -35,6 +35,8 @@ export interface GlobalPrivileges {
   }
   privileges: {
     read: GlobalPrivilege
+    readDrafts: GlobalPrivilege
+    readVersions: GlobalPrivilege
     update: GlobalPrivilege
   }
 }
@@ -100,6 +102,14 @@ const getGlobalOperationLabels = (
       en: `Read ${label.en}`,
       fr: `Lire ${label.fr}`,
     },
+    readDrafts: {
+      en: `Read ${label.en} Drafts`,
+      fr: `Lire les brouillons de ${label.fr}`,
+    },
+    readVersions: {
+      en: `Read ${label.en} Versions`,
+      fr: `Lire les versions de ${label.fr}`,
+    },
     update: {
       en: `Update ${label.en}`,
       fr: `Modifier ${label.fr}`,
@@ -119,6 +129,14 @@ const getGlobalOperationDescriptions = (
     read: {
       en: `View ${label.en.toLowerCase()} content and settings`,
       fr: `Voir le contenu et les paramètres de ${label.fr.toLowerCase()}`,
+    },
+    readDrafts: {
+      en: `Access and view draft versions of ${label.en.toLowerCase()}`,
+      fr: `Accéder et voir les brouillons de ${label.fr.toLowerCase()}`,
+    },
+    readVersions: {
+      en: `Access and view previous versions of ${label.en.toLowerCase()}`,
+      fr: `Accéder et voir les versions précédentes de ${label.fr.toLowerCase()}`,
     },
     update: {
       en: `Modify ${label.en.toLowerCase()} settings and data`,
@@ -158,6 +176,8 @@ export const generateGlobalPrivileges = (global: GlobalConfig): GlobalPrivileges
     },
     privileges: {
       read: generateGlobalPrivilege(global.slug, 'read', label),
+      readDrafts: generateGlobalPrivilege(global.slug, 'readDrafts', label),
+      readVersions: generateGlobalPrivilege(global.slug, 'readVersions', label),
       update: generateGlobalPrivilege(global.slug, 'update', label),
     },
   }

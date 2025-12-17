@@ -78,25 +78,33 @@ rolesPrivilegesPayloadPlugin({
 
 **For Collections:**
 
-The plugin automatically generates four privileges for each collection:
+The plugin automatically generates seven privileges for each collection:
 
+- `{collection-slug}-admin`: Permission to access the collection's admin UI
 - `{collection-slug}-create`: Permission to create new documents
 - `{collection-slug}-read`: Permission to read/view documents
+- `{collection-slug}-readVersions`: Permission to view document version history
 - `{collection-slug}-update`: Permission to update existing documents
 - `{collection-slug}-delete`: Permission to delete documents
+- `{collection-slug}-unlock`: Permission to unlock documents being edited by others
 
 Example for a `posts` collection:
 
+- `posts-admin`
 - `posts-create`
 - `posts-read`
+- `posts-readVersions`
 - `posts-update`
 - `posts-delete`
+- `posts-unlock`
 
 **For Globals:**
 
-The plugin generates two privileges for each global (since globals are singletons without create/delete):
+The plugin generates four privileges for each global:
 
 - `{global-slug}-read`: Permission to read/view the global
+- `{global-slug}-readDrafts`: Permission to view draft versions
+- `{global-slug}-readVersions`: Permission to view version history
 - `{global-slug}-update`: Permission to update the global
 
 Example for a `site-settings` global:

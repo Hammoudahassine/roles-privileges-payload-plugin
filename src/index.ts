@@ -93,21 +93,21 @@ export const rolesPrivilegesPayloadPlugin =
     }
 
     // Step 5: Extract ALL collections and globals data with privileges for the UI (including roles)
-    const collectionsData = Array.from(allPrivilegesMap.values()).map((collectionPrivileges) => ({
-      collectionSlug: collectionPrivileges.collectionSlug,
-      collectionLabel: collectionPrivileges.collectionLabel,
-      privileges: collectionPrivileges.privileges,
-    }))
+    // const collectionsData = Array.from(allPrivilegesMap.values()).map((collectionPrivileges) => ({
+    //   collectionSlug: collectionPrivileges.collectionSlug,
+    //   collectionLabel: collectionPrivileges.collectionLabel,
+    //   privileges: collectionPrivileges.privileges,
+    // }))
 
-    const globalsData = Array.from(allGlobalPrivilegesMap.values()).map((globalPrivileges) => ({
-      globalSlug: globalPrivileges.globalSlug,
-      globalLabel: globalPrivileges.globalLabel,
-      privileges: globalPrivileges.privileges,
-    }))
+    // const globalsData = Array.from(allGlobalPrivilegesMap.values()).map((globalPrivileges) => ({
+    //   globalSlug: globalPrivileges.globalSlug,
+    //   globalLabel: globalPrivileges.globalLabel,
+    //   privileges: globalPrivileges.privileges,
+    // }))
 
-    // Step 6: Update the roles collection with the complete privilege data
+    // Step 6: Update the roles collection with a function that returns all privilege data
+    // This ensures we get ALL collections, including those added by plugins after this one
     if (rolesCollection) {
-      // Update the privileges field with the complete collections and globals data
       const privilegesField = rolesCollection.fields.find(
         (field) => 'name' in field && field.name === 'privileges',
       )
@@ -118,9 +118,23 @@ export const rolesPrivilegesPayloadPlugin =
       ) {
         const fieldComponent = privilegesField.admin.components.Field
         if (typeof fieldComponent === 'object' && 'clientProps' in fieldComponent) {
+          // Use a getter function that will be evaluated when the component renders
+          // This ensures we get the most up-to-date list of all collections/globals
           fieldComponent.clientProps = {
-            collections: collectionsData,
-            globals: globalsData,
+            get collections() {
+              return Array.from(allPrivilegesMap.values()).map((collectionPrivileges) => ({
+                collectionSlug: collectionPrivileges.collectionSlug,
+                collectionLabel: collectionPrivileges.collectionLabel,
+                privileges: collectionPrivileges.privileges,
+              }))
+            },
+            get globals() {
+              return Array.from(allGlobalPrivilegesMap.values()).map((globalPrivileges) => ({
+                globalSlug: globalPrivileges.globalSlug,
+                globalLabel: globalPrivileges.globalLabel,
+                privileges: globalPrivileges.privileges,
+              }))
+            },
           }
         }
       }
@@ -205,6 +219,54 @@ export const rolesPrivilegesPayloadPlugin =
         } else {
           collection.access.delete = hasPrivilege(deletePrivilegeKey)
         }
+
+        // Wrap admin access
+        const adminPrivilegeKey = generatePrivilegeKey(collection.slug, 'admin')
+        if (originalAccess.admin) {
+          const originalAdmin = originalAccess.admin
+          collection.access.admin = async (args): Promise<boolean> => {
+            const hasOriginalAccess =
+              typeof originalAdmin === 'function' ? await originalAdmin(args) : originalAdmin
+            if (!hasOriginalAccess) return false
+            const result = await hasPrivilege(adminPrivilegeKey)(args)
+            return result === true
+          }
+        } else {
+          collection.access.admin = async (args): Promise<boolean> => {
+            const result = await hasPrivilege(adminPrivilegeKey)(args)
+            return result === true
+          }
+        }
+
+        // Wrap readVersions access
+        const readVersionsPrivilegeKey = generatePrivilegeKey(collection.slug, 'readVersions')
+        if (originalAccess.readVersions) {
+          const originalReadVersions = originalAccess.readVersions
+          collection.access.readVersions = async (args) => {
+            const hasOriginalAccess =
+              typeof originalReadVersions === 'function'
+                ? await originalReadVersions(args)
+                : originalReadVersions
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(readVersionsPrivilegeKey)(args)
+          }
+        } else {
+          collection.access.readVersions = hasPrivilege(readVersionsPrivilegeKey)
+        }
+
+        // Wrap unlock access
+        const unlockPrivilegeKey = generatePrivilegeKey(collection.slug, 'unlock')
+        if (originalAccess.unlock) {
+          const originalUnlock = originalAccess.unlock
+          collection.access.unlock = async (args) => {
+            const hasOriginalAccess =
+              typeof originalUnlock === 'function' ? await originalUnlock(args) : originalUnlock
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(unlockPrivilegeKey)(args)
+          }
+        } else {
+          collection.access.unlock = hasPrivilege(unlockPrivilegeKey)
+        }
       }
     }
 
@@ -251,20 +313,85 @@ export const rolesPrivilegesPayloadPlugin =
         } else {
           global.access.update = hasPrivilege(updatePrivilegeKey)
         }
+
+        // Wrap readDrafts access
+        const readDraftsPrivilegeKey = generateGlobalPrivilegeKey(global.slug, 'readDrafts')
+        if (originalAccess.readDrafts) {
+          const originalReadDrafts = originalAccess.readDrafts
+          global.access.readDrafts = async (args) => {
+            const hasOriginalAccess =
+              typeof originalReadDrafts === 'function'
+                ? await originalReadDrafts(args)
+                : originalReadDrafts
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(readDraftsPrivilegeKey)(args)
+          }
+        } else {
+          global.access.readDrafts = hasPrivilege(readDraftsPrivilegeKey)
+        }
+
+        // Wrap readVersions access
+        const readVersionsPrivilegeKey = generateGlobalPrivilegeKey(global.slug, 'readVersions')
+        if (originalAccess.readVersions) {
+          const originalReadVersions = originalAccess.readVersions
+          global.access.readVersions = async (args) => {
+            const hasOriginalAccess =
+              typeof originalReadVersions === 'function'
+                ? await originalReadVersions(args)
+                : originalReadVersions
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(readVersionsPrivilegeKey)(args)
+          }
+        } else {
+          global.access.readVersions = hasPrivilege(readVersionsPrivilegeKey)
+        }
       }
     }
 
-    // Step 8: Set up onInit to seed Super Admin role
-    if (seedSuperAdmin) {
-      const incomingOnInit = config.onInit
+    // Step 8: Set up onInit to discover late-loaded collections and seed Super Admin role
+    const incomingOnInit = config.onInit
 
-      config.onInit = async (payload) => {
-        // Ensure we are executing any existing onInit functions before running our own.
-        if (incomingOnInit) {
-          await incomingOnInit(payload)
+    config.onInit = async (payload) => {
+      // Ensure we are executing any existing onInit functions before running our own.
+      if (incomingOnInit) {
+        await incomingOnInit(payload)
+      }
+
+      // Discover and generate privileges for any collections added by plugins after ours
+      const allCollectionSlugs = Object.keys(payload.collections)
+      const existingPrivilegedCollections = Array.from(allPrivilegesMap.keys())
+
+      for (const slug of allCollectionSlugs) {
+        if (
+          !existingPrivilegedCollections.includes(slug) &&
+          !excludeCollections.includes(slug) &&
+          slug !== 'payload-preferences' &&
+          slug !== 'payload-migrations'
+        ) {
+          const collection = payload.collections[slug]
+          if (collection?.config) {
+            payload.logger.info(`[Roles & Privileges] Discovered late-loaded collection: ${slug}`)
+            generateCollectionPrivileges(collection.config)
+          }
         }
+      }
 
-        // Seed or update the Super Admin role with all privileges
+      // Discover and generate privileges for any globals added by plugins after ours
+      const allGlobalSlugs = Object.keys(payload.globals)
+      const existingPrivilegedGlobals = Array.from(allGlobalPrivilegesMap.keys())
+
+      for (const slug of allGlobalSlugs) {
+        if (!existingPrivilegedGlobals.includes(slug) && !excludeGlobals.includes(slug)) {
+          const global = (payload.globals as any)[slug]
+          if (global?.config) {
+            payload.logger.info(`[Roles & Privileges] Discovered late-loaded global: ${slug}`)
+            generateGlobalPrivileges(global.config)
+          }
+        }
+      }
+
+      // Seed or update the Super Admin role with all privileges (including late-loaded ones)
+      if (seedSuperAdmin) {
         await seedSuperAdminRole(payload)
       }
     }

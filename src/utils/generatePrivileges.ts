@@ -1,9 +1,16 @@
 import type { CollectionConfig } from 'payload'
 
 /**
- * Available privilege types for CRUD operations
+ * Available privilege types for all collection operations
  */
-export type PrivilegeType = 'create' | 'read' | 'update' | 'delete'
+export type PrivilegeType =
+  | 'admin'
+  | 'create'
+  | 'read'
+  | 'readVersions'
+  | 'update'
+  | 'delete'
+  | 'unlock'
 
 /**
  * Interface for a single privilege
@@ -34,10 +41,13 @@ export interface CollectionPrivileges {
     fr: string
   }
   privileges: {
+    admin: Privilege
     create: Privilege
     read: Privilege
+    readVersions: Privilege
     update: Privilege
     delete: Privilege
+    unlock: Privilege
   }
 }
 
@@ -122,6 +132,10 @@ const getOperationLabels = (
   singularLabel: { en: string; fr: string },
 ): { en: string; fr: string } => {
   const operationMap = {
+    admin: {
+      en: `Admin Access to ${singularLabel.en}`,
+      fr: `Accès administrateur à ${singularLabel.fr}`,
+    },
     create: {
       en: `Create ${singularLabel.en}`,
       fr: `Créer ${singularLabel.fr}`,
@@ -130,6 +144,10 @@ const getOperationLabels = (
       en: `Read ${singularLabel.en}`,
       fr: `Lire ${singularLabel.fr}`,
     },
+    readVersions: {
+      en: `Read ${singularLabel.en} Versions`,
+      fr: `Lire les versions de ${singularLabel.fr}`,
+    },
     update: {
       en: `Update ${singularLabel.en}`,
       fr: `Modifier ${singularLabel.fr}`,
@@ -137,6 +155,10 @@ const getOperationLabels = (
     delete: {
       en: `Delete ${singularLabel.en}`,
       fr: `Supprimer ${singularLabel.fr}`,
+    },
+    unlock: {
+      en: `Unlock ${singularLabel.en}`,
+      fr: `Déverrouiller ${singularLabel.fr}`,
     },
   }
   return operationMap[operation]
@@ -151,6 +173,10 @@ const getOperationDescriptions = (
   pluralLabel: { en: string; fr: string },
 ): { en: string; fr: string } => {
   const descriptionMap = {
+    admin: {
+      en: `Access the ${pluralLabel.en.toLowerCase()} admin panel and UI`,
+      fr: `Accéder au panneau d'administration et à l'interface utilisateur des ${pluralLabel.fr.toLowerCase()}`,
+    },
     create: {
       en: `Ability to create new ${pluralLabel.en.toLowerCase()}`,
       fr: `Possibilité de créer de nouveaux ${pluralLabel.fr.toLowerCase()}`,
@@ -159,6 +185,10 @@ const getOperationDescriptions = (
       en: `View ${singularLabel.en.toLowerCase()} content and information`,
       fr: `Voir le contenu et les informations de ${singularLabel.fr.toLowerCase()}`,
     },
+    readVersions: {
+      en: `Access and view previous versions of ${pluralLabel.en.toLowerCase()}`,
+      fr: `Accéder et voir les versions précédentes des ${pluralLabel.fr.toLowerCase()}`,
+    },
     update: {
       en: `Modify existing ${singularLabel.en.toLowerCase()} data`,
       fr: `Modifier les données existantes de ${singularLabel.fr.toLowerCase()}`,
@@ -166,6 +196,10 @@ const getOperationDescriptions = (
     delete: {
       en: `Remove ${pluralLabel.en.toLowerCase()} from the system`,
       fr: `Supprimer ${pluralLabel.fr.toLowerCase()} du système`,
+    },
+    unlock: {
+      en: `Unlock ${pluralLabel.en.toLowerCase()} that are being edited by other users`,
+      fr: `Déverrouiller ${pluralLabel.fr.toLowerCase()} en cours de modification par d'autres utilisateurs`,
     },
   }
   return descriptionMap[operation]
@@ -204,10 +238,13 @@ export const generateCollectionPrivileges = (
       fr: `Gérer ${pluralLabel.fr.toLowerCase()} dans le système`,
     },
     privileges: {
+      admin: generatePrivilege(collection.slug, 'admin', singularLabel, pluralLabel),
       create: generatePrivilege(collection.slug, 'create', singularLabel, pluralLabel),
       read: generatePrivilege(collection.slug, 'read', singularLabel, pluralLabel),
+      readVersions: generatePrivilege(collection.slug, 'readVersions', singularLabel, pluralLabel),
       update: generatePrivilege(collection.slug, 'update', singularLabel, pluralLabel),
       delete: generatePrivilege(collection.slug, 'delete', singularLabel, pluralLabel),
+      unlock: generatePrivilege(collection.slug, 'unlock', singularLabel, pluralLabel),
     },
   }
 
