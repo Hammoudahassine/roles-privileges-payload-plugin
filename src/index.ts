@@ -83,7 +83,16 @@ export const rolesPrivilegesPayloadPlugin =
       }
     }
 
-    // Step 3: Extract collections and globals data with privileges for the UI
+    // Step 3: Add the roles collection first (without privileges data yet)
+    config.collections.push(createRolesCollection([], []))
+
+    // Step 4: Generate privileges for the roles collection itself
+    const rolesCollection = config.collections.find((c) => c.slug === 'roles')
+    if (rolesCollection) {
+      generateCollectionPrivileges(rolesCollection)
+    }
+
+    // Step 5: Extract ALL collections and globals data with privileges for the UI (including roles)
     const collectionsData = Array.from(allPrivilegesMap.values()).map((collectionPrivileges) => ({
       collectionSlug: collectionPrivileges.collectionSlug,
       collectionLabel: collectionPrivileges.collectionLabel,
@@ -96,13 +105,25 @@ export const rolesPrivilegesPayloadPlugin =
       privileges: globalPrivileges.privileges,
     }))
 
-    // Add the roles collection with privilege data
-    config.collections.push(createRolesCollection(collectionsData, globalsData))
-
-    // Step 4: Generate privileges for the roles collection itself
-    const rolesCollection = config.collections.find((c) => c.slug === 'roles')
+    // Step 6: Update the roles collection with the complete privilege data
     if (rolesCollection) {
-      generateCollectionPrivileges(rolesCollection)
+      // Update the privileges field with the complete collections and globals data
+      const privilegesField = rolesCollection.fields.find(
+        (field) => 'name' in field && field.name === 'privileges',
+      )
+      if (
+        privilegesField &&
+        'admin' in privilegesField &&
+        privilegesField.admin?.components?.Field
+      ) {
+        const fieldComponent = privilegesField.admin.components.Field
+        if (typeof fieldComponent === 'object' && 'clientProps' in fieldComponent) {
+          fieldComponent.clientProps = {
+            collections: collectionsData,
+            globals: globalsData,
+          }
+        }
+      }
     }
 
     /**
@@ -113,7 +134,7 @@ export const rolesPrivilegesPayloadPlugin =
       return config
     }
 
-    // Step 5: Wrap collection access controls with privilege checks
+    // Step 7: Wrap collection access controls with privilege checks
     if (wrapCollectionAccess) {
       for (const collection of config.collections) {
         // Skip excluded collections and the roles collection (already has access controls)
@@ -187,7 +208,7 @@ export const rolesPrivilegesPayloadPlugin =
       }
     }
 
-    // Step 6: Wrap global access controls with privilege checks
+    // Step 7: Wrap global access controls with privilege checks
     if (wrapGlobalAccess) {
       for (const global of config.globals) {
         // Skip excluded globals
@@ -233,7 +254,7 @@ export const rolesPrivilegesPayloadPlugin =
       }
     }
 
-    // Step 7: Set up onInit to seed Super Admin role
+    // Step 8: Set up onInit to seed Super Admin role
     if (seedSuperAdmin) {
       const incomingOnInit = config.onInit
 
@@ -248,7 +269,7 @@ export const rolesPrivilegesPayloadPlugin =
       }
     }
 
-    // Step 8: Add plugin translations to config
+    // Step 9: Add plugin translations to config
     if (!config.i18n?.translations) {
       if (!config.i18n) {
         config.i18n = {}
