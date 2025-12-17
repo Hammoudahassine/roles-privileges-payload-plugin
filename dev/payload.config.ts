@@ -37,8 +37,55 @@ const buildConfigWithMemoryDB = async () => {
     },
     collections: [
       {
+        slug: 'users',
+        auth: true,
+        fields: [
+          {
+            name: 'name',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'roles',
+            type: 'relationship',
+            relationTo: 'roles',
+            hasMany: true,
+            required: true,
+          },
+        ],
+      },
+      {
         slug: 'posts',
-        fields: [],
+        labels: {
+          singular: { en: 'Blog Post', fr: 'Article de blog' },
+          plural: { en: 'Blog Posts', fr: 'Articles de blog' },
+        },
+        fields: [
+          {
+            name: 'title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'content',
+            type: 'richText',
+          },
+        ],
+      },
+      {
+        slug: 'pages',
+        fields: [
+          {
+            name: 'title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'slug',
+            type: 'text',
+            required: true,
+          },
+        ],
       },
       {
         slug: 'media',
@@ -46,6 +93,42 @@ const buildConfigWithMemoryDB = async () => {
         upload: {
           staticDir: path.resolve(dirname, 'media'),
         },
+      },
+    ],
+    globals: [
+      {
+        slug: 'site-settings',
+        label: {
+          en: 'Site Settings',
+          fr: 'Paramètres du site',
+        },
+        fields: [
+          {
+            name: 'siteName',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'logo',
+            type: 'upload',
+            relationTo: 'media',
+          },
+        ],
+      },
+      {
+        slug: 'header',
+        fields: [
+          {
+            name: 'navItems',
+            type: 'array',
+            fields: [
+              {
+                name: 'label',
+                type: 'text',
+              },
+            ],
+          },
+        ],
       },
     ],
     db: mongooseAdapter({
@@ -59,9 +142,12 @@ const buildConfigWithMemoryDB = async () => {
     },
     plugins: [
       rolesPrivilegesPayloadPlugin({
-        collections: {
-          posts: true,
-        },
+        // Exclude media from automatic privilege wrapping
+        excludeCollections: ['payload-preferences'],
+        // Automatically wrap all collection access with privilege checks
+        wrapCollectionAccess: true,
+        // Seed Super Admin role with all privileges
+        seedSuperAdmin: true,
       }),
     ],
     secret: process.env.PAYLOAD_SECRET || 'test-secret_key',

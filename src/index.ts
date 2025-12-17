@@ -1,111 +1,229 @@
-import type { CollectionSlug, Config } from 'payload'
-
-import { customEndpointHandler } from './endpoints/customEndpointHandler.js'
+import type { Config } from 'payload'
+import { createRolesCollection } from './collections/roles.js'
+import {
+  generateGlobalPrivilegeKey,
+  generateGlobalPrivileges,
+} from './utils/generateGlobalPrivileges.js'
+import { generateCollectionPrivileges, generatePrivilegeKey } from './utils/generatePrivileges.js'
+import { hasPrivilege } from './utils/privilegesAccess.js'
+import { seedSuperAdminRole } from './utils/seedSuperAdminRole.js'
 
 export type RolesPrivilegesPayloadPluginConfig = {
   /**
-   * List of collections to add a custom field
+   * Disable the plugin (roles collection will still be added to maintain schema consistency)
    */
-  collections?: Partial<Record<CollectionSlug, true>>
   disabled?: boolean
+  /**
+   * Collections to exclude from automatic privilege generation
+   */
+  excludeCollections?: string[]
+  /**
+   * Globals to exclude from automatic privilege generation
+   */
+  excludeGlobals?: string[]
+  /**
+   * Whether to automatically wrap collection access controls with privilege checks
+   * @default true
+   */
+  wrapCollectionAccess?: boolean
+  /**
+   * Whether to automatically wrap global access controls with privilege checks
+   * @default true
+   */
+  wrapGlobalAccess?: boolean
+  /**
+   * Whether to seed a Super Admin role with all privileges on init
+   * @default true
+   */
+  seedSuperAdmin?: boolean
 }
 
+// Re-export utilities and types from organized export files
+export * from './exports/types.js'
+export * from './exports/utilities.js'
+
 export const rolesPrivilegesPayloadPlugin =
-  (pluginOptions: RolesPrivilegesPayloadPluginConfig) =>
+  (pluginOptions: RolesPrivilegesPayloadPluginConfig = {}) =>
   (config: Config): Config => {
+    const {
+      excludeCollections = [],
+      excludeGlobals = [],
+      wrapCollectionAccess = true,
+      wrapGlobalAccess = true,
+      seedSuperAdmin = true,
+    } = pluginOptions
+
     if (!config.collections) {
       config.collections = []
     }
 
-    config.collections.push({
-      slug: 'plugin-collection',
-      fields: [
-        {
-          name: 'id',
-          type: 'text',
-        },
-      ],
-    })
+    if (!config.globals) {
+      config.globals = []
+    }
 
-    if (pluginOptions.collections) {
-      for (const collectionSlug in pluginOptions.collections) {
-        const collection = config.collections.find(
-          (collection) => collection.slug === collectionSlug,
-        )
-
-        if (collection) {
-          collection.fields.push({
-            name: 'addedByPlugin',
-            type: 'text',
-            admin: {
-              position: 'sidebar',
-            },
-          })
-        }
+    // Step 1: Generate privileges for all existing collections (except excluded ones)
+    for (const collection of config.collections) {
+      if (!excludeCollections.includes(collection.slug) && collection.slug !== 'roles') {
+        generateCollectionPrivileges(collection)
       }
     }
 
+    // Step 2: Generate privileges for all existing globals (except excluded ones)
+    for (const global of config.globals) {
+      if (!excludeGlobals.includes(global.slug)) {
+        generateGlobalPrivileges(global)
+      }
+    }
+
+    // Step 3: Add the roles collection
+    config.collections.push(createRolesCollection())
+
+    // Step 4: Generate privileges for the roles collection itself
+    const rolesCollection = config.collections.find((c) => c.slug === 'roles')
+    if (rolesCollection) {
+      generateCollectionPrivileges(rolesCollection)
+    }
+
     /**
-     * If the plugin is disabled, we still want to keep added collections/fields so the database schema is consistent which is important for migrations.
-     * If your plugin heavily modifies the database schema, you may want to remove this property.
+     * If the plugin is disabled, we still want to keep the roles collection
+     * so the database schema is consistent which is important for migrations.
      */
     if (pluginOptions.disabled) {
       return config
     }
 
-    if (!config.endpoints) {
-      config.endpoints = []
-    }
+    // Step 5: Wrap collection access controls with privilege checks
+    if (wrapCollectionAccess) {
+      for (const collection of config.collections) {
+        // Skip excluded collections and the roles collection (already has access controls)
+        if (excludeCollections.includes(collection.slug) || collection.slug === 'roles') {
+          continue
+        }
 
-    if (!config.admin) {
-      config.admin = {}
-    }
+        // Initialize access object if it doesn't exist
+        if (!collection.access) {
+          collection.access = {}
+        }
 
-    if (!config.admin.components) {
-      config.admin.components = {}
-    }
+        // Store original access functions
+        const originalAccess = { ...collection.access }
 
-    if (!config.admin.components.beforeDashboard) {
-      config.admin.components.beforeDashboard = []
-    }
+        // Wrap create access
+        const createPrivilegeKey = generatePrivilegeKey(collection.slug, 'create')
+        if (originalAccess.create) {
+          const originalCreate = originalAccess.create
+          collection.access.create = async (args) => {
+            const hasOriginalAccess =
+              typeof originalCreate === 'function' ? await originalCreate(args) : originalCreate
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(createPrivilegeKey)(args)
+          }
+        } else {
+          collection.access.create = hasPrivilege(createPrivilegeKey)
+        }
 
-    config.admin.components.beforeDashboard.push(
-      `roles-privileges-payload-plugin/client#BeforeDashboardClient`,
-    )
-    config.admin.components.beforeDashboard.push(
-      `roles-privileges-payload-plugin/rsc#BeforeDashboardServer`,
-    )
+        // Wrap read access
+        const readPrivilegeKey = generatePrivilegeKey(collection.slug, 'read')
+        if (originalAccess.read) {
+          const originalRead = originalAccess.read
+          collection.access.read = async (args) => {
+            const hasOriginalAccess =
+              typeof originalRead === 'function' ? await originalRead(args) : originalRead
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(readPrivilegeKey)(args)
+          }
+        } else {
+          collection.access.read = hasPrivilege(readPrivilegeKey)
+        }
 
-    config.endpoints.push({
-      handler: customEndpointHandler,
-      method: 'get',
-      path: '/my-plugin-endpoint',
-    })
+        // Wrap update access
+        const updatePrivilegeKey = generatePrivilegeKey(collection.slug, 'update')
+        if (originalAccess.update) {
+          const originalUpdate = originalAccess.update
+          collection.access.update = async (args) => {
+            const hasOriginalAccess =
+              typeof originalUpdate === 'function' ? await originalUpdate(args) : originalUpdate
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(updatePrivilegeKey)(args)
+          }
+        } else {
+          collection.access.update = hasPrivilege(updatePrivilegeKey)
+        }
 
-    const incomingOnInit = config.onInit
-
-    config.onInit = async (payload) => {
-      // Ensure we are executing any existing onInit functions before running our own.
-      if (incomingOnInit) {
-        await incomingOnInit(payload)
+        // Wrap delete access
+        const deletePrivilegeKey = generatePrivilegeKey(collection.slug, 'delete')
+        if (originalAccess.delete) {
+          const originalDelete = originalAccess.delete
+          collection.access.delete = async (args) => {
+            const hasOriginalAccess =
+              typeof originalDelete === 'function' ? await originalDelete(args) : originalDelete
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(deletePrivilegeKey)(args)
+          }
+        } else {
+          collection.access.delete = hasPrivilege(deletePrivilegeKey)
+        }
       }
+    }
 
-      const { totalDocs } = await payload.count({
-        collection: 'plugin-collection',
-        where: {
-          id: {
-            equals: 'seeded-by-plugin',
-          },
-        },
-      })
+    // Step 6: Wrap global access controls with privilege checks
+    if (wrapGlobalAccess) {
+      for (const global of config.globals) {
+        // Skip excluded globals
+        if (excludeGlobals.includes(global.slug)) {
+          continue
+        }
 
-      if (totalDocs === 0) {
-        await payload.create({
-          collection: 'plugin-collection',
-          data: {
-            id: 'seeded-by-plugin',
-          },
-        })
+        // Initialize access object if it doesn't exist
+        if (!global.access) {
+          global.access = {}
+        }
+
+        // Store original access functions
+        const originalAccess = { ...global.access }
+
+        // Wrap read access
+        const readPrivilegeKey = generateGlobalPrivilegeKey(global.slug, 'read')
+        if (originalAccess.read) {
+          const originalRead = originalAccess.read
+          global.access.read = async (args) => {
+            const hasOriginalAccess =
+              typeof originalRead === 'function' ? await originalRead(args) : originalRead
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(readPrivilegeKey)(args)
+          }
+        } else {
+          global.access.read = hasPrivilege(readPrivilegeKey)
+        }
+
+        // Wrap update access
+        const updatePrivilegeKey = generateGlobalPrivilegeKey(global.slug, 'update')
+        if (originalAccess.update) {
+          const originalUpdate = originalAccess.update
+          global.access.update = async (args) => {
+            const hasOriginalAccess =
+              typeof originalUpdate === 'function' ? await originalUpdate(args) : originalUpdate
+            if (!hasOriginalAccess) return false
+            return hasPrivilege(updatePrivilegeKey)(args)
+          }
+        } else {
+          global.access.update = hasPrivilege(updatePrivilegeKey)
+        }
+      }
+    }
+
+    // Step 7: Set up onInit to seed Super Admin role
+    if (seedSuperAdmin) {
+      const incomingOnInit = config.onInit
+
+      config.onInit = async (payload) => {
+        // Ensure we are executing any existing onInit functions before running our own.
+        if (incomingOnInit) {
+          await incomingOnInit(payload)
+        }
+
+        // Seed or update the Super Admin role with all privileges
+        await seedSuperAdminRole(payload)
       }
     }
 

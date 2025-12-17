@@ -1,1 +1,1 @@
-export { BeforeDashboardClient } from '../components/BeforeDashboardClient.js'
+export { default as PrivilegesSelect } from '../components/PrivilegesSelect.js'
