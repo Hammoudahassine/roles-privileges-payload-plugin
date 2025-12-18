@@ -47,12 +47,21 @@ export const privilegesAccess = (privilegeArrays: string[][]): Access => {
 }
 
 /**
- * Check if user has a specific privilege (synchronous version for field access)
- * @param privilegeKey - The privilege key to check
+ * Check if user has specific privileges based on their roles (synchronous version for field access)
+ * @param privilegeArrays - Multiple arrays of privileges. Within each array is AND logic, between arrays is OR logic
  * @param user - The user object from req
- * @returns Boolean indicating if user has the privilege
+ * @returns Boolean indicating if user has required privileges
+ * @example
+ * // User must have BOTH pages-create AND pages-read
+ * checkPrivileges([['pages-create', 'pages-read']], req.user)
+ *
+ * // User must have EITHER pages-create OR posts-create
+ * checkPrivileges([['pages-create'], ['posts-create']], req.user)
+ *
+ * // User must have (pages-create AND pages-read) OR (posts-create AND posts-read)
+ * checkPrivileges([['pages-create', 'pages-read'], ['posts-create', 'posts-read']], req.user)
  */
-export const checkPrivilege = (privilegeKey: string, user: any): boolean => {
+export const checkPrivileges = (privilegeArrays: string[][], user: any): boolean => {
   if (!user) {
     return false
   }
@@ -75,7 +84,21 @@ export const checkPrivilege = (privilegeKey: string, user: any): boolean => {
     }
   }
 
-  return userPrivileges.has(privilegeKey)
+  // Check if user satisfies any of the privilege arrays (OR logic between arrays)
+  return privilegeArrays.some((privilegeArray) => {
+    // Check if user has all privileges in this array (AND logic within array)
+    return privilegeArray.every((privilege) => userPrivileges.has(privilege))
+  })
+}
+
+/**
+ * Check if user has a specific privilege (synchronous version for field access)
+ * @param privilegeKey - The privilege key to check
+ * @param user - The user object from req
+ * @returns Boolean indicating if user has the privilege
+ */
+export const checkPrivilege = (privilegeKey: string, user: any): boolean => {
+  return checkPrivileges([[privilegeKey]], user)
 }
 
 /**
@@ -103,4 +126,27 @@ export const hasAnyPrivilege = (...privilegeKeys: string[]): Access => {
  */
 export const hasAllPrivileges = (...privilegeKeys: string[]): Access => {
   return privilegesAccess([privilegeKeys])
+}
+
+/**
+ * Check if user has ANY of the privileges (OR logic, synchronous version for field access)
+ * @param user - The user object from req
+ * @param privilegeKeys - Array of privilege keys where ANY must match
+ * @returns Boolean indicating if user has any of the required privileges
+ */
+export const checkAnyPrivilege = (user: any, ...privilegeKeys: string[]): boolean => {
+  return checkPrivileges(
+    privilegeKeys.map((key) => [key]),
+    user,
+  )
+}
+
+/**
+ * Check if user has ALL of the privileges (AND logic, synchronous version for field access)
+ * @param user - The user object from req
+ * @param privilegeKeys - Array of privilege keys where ALL must match
+ * @returns Boolean indicating if user has all of the required privileges
+ */
+export const checkAllPrivileges = (user: any, ...privilegeKeys: string[]): boolean => {
+  return checkPrivileges([privilegeKeys], user)
 }

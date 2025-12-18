@@ -287,6 +287,44 @@ import {
   ]
 }
 
+// Field-level access with ANY privilege (OR logic)
+{
+  fields: [
+    {
+      name: 'status',
+      access: {
+        update: ({ req }) => checkAnyPrivilege(req.user, 'posts-update', 'posts-admin'),
+      },
+    },
+  ]
+}
+
+// Field-level access with ALL privileges (AND logic)
+{
+  fields: [
+    {
+      name: 'publishedDate',
+      access: {
+        update: ({ req }) => checkAllPrivileges(req.user, 'posts-update', 'posts-publish'),
+      },
+    },
+  ]
+}
+
+// Complex field-level privilege logic
+{
+  fields: [
+    {
+      name: 'featured',
+      access: {
+        // User needs (posts-update AND posts-feature) OR (posts-admin)
+        update: ({ req }) =>
+          checkPrivileges([['posts-update', 'posts-feature'], ['posts-admin']], req.user),
+      },
+    },
+  ]
+}
+
 // User needs ANY of these privileges (OR logic)
 {
   access: {
@@ -443,13 +481,19 @@ type RolesPrivilegesPayloadPluginConfig = {
 
 - `rolesPrivilegesPayloadPlugin(config?)`: Main plugin function
 
-**Access Control:**
+**Access Control (Collection/Global Level - Async):**
 
-- `hasPrivilege(key: string)`: Check for a single privilege (collection/global access)
-- `checkPrivilege(key: string, user: any)`: Check for a single privilege (field access, synchronous)
+- `hasPrivilege(key: string)`: Check for a single privilege
 - `hasAnyPrivilege(...keys: string[])`: Check for any privilege (OR logic)
 - `hasAllPrivileges(...keys: string[])`: Check for all privileges (AND logic)
 - `privilegesAccess(arrays: string[][])`: Complex privilege logic
+
+**Access Control (Field Level - Synchronous):**
+
+- `checkPrivilege(key: string, user: any)`: Check for a single privilege
+- `checkAnyPrivilege(user: any, ...keys: string[])`: Check for any privilege (OR logic)
+- `checkAllPrivileges(user: any, ...keys: string[])`: Check for all privileges (AND logic)
+- `checkPrivileges(arrays: string[][], user: any)`: Complex privilege logic
 
 **Collection Privileges:**
 

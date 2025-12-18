@@ -1,6 +1,9 @@
 // Re-export utility functions for access control
 export {
+  checkAllPrivileges,
+  checkAnyPrivilege,
   checkPrivilege,
+  checkPrivileges,
   hasAllPrivileges,
   hasAnyPrivilege,
   hasPrivilege,
