@@ -182,6 +182,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
               >
                 {privileges.map((privilege) => {
                   const isSelected = isPrivilegeSelected(privilege.privilegeKey)
+                  const isCustom = privilege.isCustom === true
                   return (
                     <div
                       key={privilege.privilegeKey}
@@ -216,8 +217,12 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                               fontSize: '14px',
                               color: 'var(--theme-elevation-1000)',
                               marginBottom: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
                             }}
                           >
+                            {isCustom && <span style={{ fontSize: '16px' }}>⭐</span>}
                             {getLabel(privilege.label)}
                           </div>
                           <div
@@ -233,14 +238,19 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                           <div
                             style={{
                               padding: '4px 8px',
-                              backgroundColor: 'var(--theme-elevation-100)',
+                              backgroundColor: isCustom
+                                ? 'var(--theme-warning-100)'
+                                : 'var(--theme-elevation-100)',
                               borderRadius: '4px',
                               fontSize: '11px',
                               fontFamily: 'monospace',
-                              color: 'var(--theme-elevation-800)',
+                              color: isCustom
+                                ? 'var(--theme-warning-900)'
+                                : 'var(--theme-elevation-800)',
                               display: 'inline-block',
                             }}
                           >
+                            {isCustom && '⭐ '}
                             {privilege.privilegeKey}
                           </div>
                         </div>
@@ -304,6 +314,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
               >
                 {privileges.map((privilege) => {
                   const isSelected = isPrivilegeSelected(privilege.privilegeKey)
+                  const isCustom = privilege.isCustom === true
                   return (
                     <div
                       key={privilege.privilegeKey}
@@ -338,9 +349,13 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                               fontSize: '14px',
                               color: 'var(--theme-elevation-1000)',
                               marginBottom: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
                             }}
                           >
-                            {privilege.label[locale]}
+                            {isCustom && <span style={{ fontSize: '16px' }}>⭐</span>}
+                            {getLabel(privilege.label)}
                           </div>
                           <div
                             style={{
@@ -350,19 +365,24 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                               marginBottom: '8px',
                             }}
                           >
-                            {privilege.description[locale]}
+                            {getLabel(privilege.description)}
                           </div>
                           <div
                             style={{
                               padding: '4px 8px',
-                              backgroundColor: 'var(--theme-elevation-100)',
+                              backgroundColor: isCustom
+                                ? 'var(--theme-warning-100)'
+                                : 'var(--theme-elevation-100)',
                               borderRadius: '4px',
                               fontSize: '11px',
                               fontFamily: 'monospace',
-                              color: 'var(--theme-elevation-800)',
+                              color: isCustom
+                                ? 'var(--theme-warning-900)'
+                                : 'var(--theme-elevation-800)',
                               display: 'inline-block',
                             }}
                           >
+                            {isCustom && '⭐ '}
                             {privilege.privilegeKey}
                           </div>
                         </div>

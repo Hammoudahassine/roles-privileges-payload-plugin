@@ -20,6 +20,7 @@ export interface Privilege {
   privilegeKey: string
   label: Record<string, string>
   description: Record<string, string>
+  isCustom?: boolean
 }
 
 /**

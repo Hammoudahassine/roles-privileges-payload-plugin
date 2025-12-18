@@ -47,6 +47,38 @@ export const privilegesAccess = (privilegeArrays: string[][]): Access => {
 }
 
 /**
+ * Check if user has a specific privilege (synchronous version for field access)
+ * @param privilegeKey - The privilege key to check
+ * @param user - The user object from req
+ * @returns Boolean indicating if user has the privilege
+ */
+export const checkPrivilege = (privilegeKey: string, user: any): boolean => {
+  if (!user) {
+    return false
+  }
+
+  // Get all privileges from user's roles
+  const userPrivileges = new Set<string>()
+
+  if (user.roles && Array.isArray(user.roles)) {
+    for (const role of user.roles) {
+      if (typeof role === 'object' && role !== null && 'privileges' in role) {
+        const rolePrivileges = role.privileges
+        if (Array.isArray(rolePrivileges)) {
+          for (const priv of rolePrivileges) {
+            if (typeof priv === 'object' && priv !== null && 'privilege' in priv) {
+              userPrivileges.add(priv.privilege as string)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return userPrivileges.has(privilegeKey)
+}
+
+/**
  * Create a simple single-privilege check access function
  * @param privilegeKey - The privilege key to check
  * @returns Access function that checks if user has the required privilege

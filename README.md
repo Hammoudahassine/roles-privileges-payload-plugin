@@ -8,8 +8,9 @@ A powerful Payload CMS plugin that automatically generates role-based access con
 - 🎯 **Smart Access Control Wrapping**: Seamlessly wraps existing collection and global access controls with privilege checks
 - 🌐 **Full Global Support**: Generates privileges for Payload globals (read/update operations)
 - 👑 **Super Admin Role**: Auto-seeds a Super Admin role with all privileges
-- 🎨 **Beautiful UI**: Custom privilege selector component with multi-column interface showing both collections and globals
-- 🗣️ **Multilingual**: Built-in support for English and French labels
+- 🎨 **Beautiful UI**: Custom privilege selector component with collapsible interface showing both collections and globals
+- ⭐ **Custom Privileges**: Register custom privileges that appear in the admin UI alongside auto-generated ones
+- 🗣️ **Multilingual**: Full support for any language with fallback chains (\_default → en → first available)
 - ⚙️ **Highly Configurable**: Exclude collections/globals, disable features, or customize behavior
 - 🔄 **Zero Configuration**: Works out of the box with sensible defaults
 
@@ -159,11 +160,12 @@ The plugin adds a `roles` collection with:
 
 The privileges field uses a custom UI component that provides:
 
-- Three-column interface (Collections & Globals | Privileges | Description)
+- Collapsible interface organized by collections and globals
 - Visual distinction between collections (📦) and globals (🌐)
+- Star icon (⭐) for custom privileges
 - Checkbox selection for easy privilege management
-- Real-time privilege descriptions
-- Selected privileges summary
+- Real-time privilege descriptions with multilingual support
+- Badge counter showing selected privileges per collection/global
 
 ### 4. User Integration
 
@@ -187,18 +189,102 @@ To use roles in your users collection, add a relationship field:
 
 ## Advanced Usage
 
+### Creating Custom Privileges
+
+You can create custom privileges beyond the auto-generated CRUD operations. Custom privileges registered with `registerCustomPrivilege` will appear in the admin UI with a star icon (⭐) to differentiate them from auto-generated privileges:
+
+```ts
+import { registerCustomPrivilege, hasPrivilege } from 'roles-privileges-payload-plugin'
+
+// Register a custom privilege (will appear in admin UI)
+const publishPrivilege = registerCustomPrivilege('posts', {
+  privilegeKey: 'posts-publish',
+  label: {
+    en: 'Publish Posts',
+    fr: 'Publier les articles',
+  },
+  description: {
+    en: 'Ability to publish posts to make them publicly visible',
+    fr: 'Capacité de publier des articles pour les rendre publiquement visibles',
+  },
+})
+
+// Use it in your collection
+export const Posts = {
+  slug: 'posts',
+  fields: [
+    {
+      name: 'status',
+      type: 'select',
+      options: ['draft', 'published'],
+      access: {
+        update: async ({ req, data }) => {
+          if (data?.status === 'published') {
+            return hasPrivilege(publishPrivilege.privilegeKey)({ req })
+          }
+          return true
+        },
+      },
+    },
+  ],
+}
+
+// Register multiple custom privileges at once
+import { registerCustomPrivileges } from 'roles-privileges-payload-plugin'
+
+const customPrivileges = registerCustomPrivileges('posts', [
+  {
+    privilegeKey: 'posts-publish',
+    label: { en: 'Publish Posts' },
+    description: { en: 'Publish posts to make them visible' },
+  },
+  {
+    privilegeKey: 'posts-feature',
+    label: { en: 'Feature Posts' },
+    description: { en: 'Feature posts on the homepage' },
+  },
+])
+```
+
+Custom privileges are visually distinguished in the admin UI with:
+
+- ⭐ Star icon next to the privilege label
+- Yellow/warning background for the privilege key badge
+- Clear separation from auto-generated CRUD privileges
+
+For more details, see [CUSTOM_PRIVILEGES.md](./CUSTOM_PRIVILEGES.md).
+
 ### Custom Privilege Checks
 
 You can use the privilege access functions in your own access controls:
 
 ```ts
-import { hasPrivilege, hasAnyPrivilege, hasAllPrivileges } from 'roles-privileges-payload-plugin'
+import {
+  hasPrivilege,
+  hasAnyPrivilege,
+  hasAllPrivileges,
+  checkPrivilege,
+} from 'roles-privileges-payload-plugin'
 
-// Single privilege check
+// Single privilege check (for collection/global access)
 {
   access: {
     read: hasPrivilege('posts-read')
   }
+}
+
+// For field-level access, use checkPrivilege (synchronous)
+{
+  fields: [
+    {
+      name: 'sensitiveField',
+      type: 'text',
+      access: {
+        read: ({ req }) => checkPrivilege('posts-admin', req.user),
+        update: ({ req }) => checkPrivilege('posts-admin', req.user),
+      },
+    },
+  ]
 }
 
 // User needs ANY of these privileges (OR logic)
@@ -359,7 +445,8 @@ type RolesPrivilegesPayloadPluginConfig = {
 
 **Access Control:**
 
-- `hasPrivilege(key: string)`: Check for a single privilege
+- `hasPrivilege(key: string)`: Check for a single privilege (collection/global access)
+- `checkPrivilege(key: string, user: any)`: Check for a single privilege (field access, synchronous)
 - `hasAnyPrivilege(...keys: string[])`: Check for any privilege (OR logic)
 - `hasAllPrivileges(...keys: string[])`: Check for all privileges (AND logic)
 - `privilegesAccess(arrays: string[][])`: Complex privilege logic
@@ -378,14 +465,22 @@ type RolesPrivilegesPayloadPluginConfig = {
 - `getAllGlobalPrivilegeKeys()`: Get all global privilege keys
 - `allGlobalPrivilegesMap`: Map of all global privileges
 
+**Custom Privileges:**
+
+- `registerCustomPrivilege(slug, config, options?)`: Register a single custom privilege
+- `registerCustomPrivileges(slug, configs, options?)`: Register multiple custom privileges
+- `customPrivilegesRegistry`: Map of all registered custom privileges
+
 ## Best Practices
 
 1. **Always use the roles relationship**: Connect users to roles via a relationship field
 2. **Start with Super Admin**: Create your first user with the Super Admin role
 3. **Exclude system collections**: Exclude collections like migrations and preferences
 4. **Consider global permissions**: Remember that globals only have read/update (no create/delete)
-5. **Test privilege combinations**: Test different role configurations thoroughly
-6. **Document custom roles**: Maintain documentation for custom roles you create
+5. **Register custom privileges early**: Register custom privileges before the plugin initializes
+6. **Use multilingual labels**: Provide translations for all languages your app supports
+7. **Test privilege combinations**: Test different role configurations thoroughly
+8. **Document custom roles**: Maintain documentation for custom roles you create
 
 ## Troubleshooting
 

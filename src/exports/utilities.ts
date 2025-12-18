@@ -1,5 +1,6 @@
 // Re-export utility functions for access control
 export {
+  checkPrivilege,
   hasAllPrivileges,
   hasAnyPrivilege,
   hasPrivilege,
@@ -23,3 +24,12 @@ export {
   getAllGlobalPrivilegeKeys,
   getAllGlobalPrivileges,
 } from '../utils/generateGlobalPrivileges.js'
+
+// Re-export custom privilege registration utilities
+export {
+  customPrivilegesRegistry,
+  registerCustomPrivilege,
+  registerCustomPrivileges,
+  type CustomGlobalPrivilege,
+  type CustomPrivilegeConfig,
+} from '../utils/createCustomPrivilege.js'
