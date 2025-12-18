@@ -27,6 +27,47 @@ export const enTranslations: PluginTranslations = {
     'privilege-operation-update': 'Update',
     'privilege-operation-delete': 'Delete',
 
+    // Collection privilege operation prefixes
+    'privilege-prefix-admin': 'Admin Access to',
+    'privilege-prefix-create': 'Create',
+    'privilege-prefix-read': 'Read',
+    'privilege-prefix-readVersions': 'Read Versions:',
+    'privilege-prefix-update': 'Update',
+    'privilege-prefix-delete': 'Delete',
+    'privilege-prefix-unlock': 'Unlock',
+
+    // Collection privilege description templates
+    'privilege-template-admin': 'Access the {label} admin panel and UI',
+    'privilege-template-admin-plural': 'true',
+    'privilege-template-create': 'Ability to create new {label}',
+    'privilege-template-create-plural': 'true',
+    'privilege-template-read': 'View {label} content and information',
+    'privilege-template-read-plural': 'false',
+    'privilege-template-readVersions': 'Access and view previous versions of {label}',
+    'privilege-template-readVersions-plural': 'true',
+    'privilege-template-update': 'Modify existing {label} data',
+    'privilege-template-update-plural': 'false',
+    'privilege-template-delete': 'Remove {label} from the system',
+    'privilege-template-delete-plural': 'true',
+    'privilege-template-unlock': 'Unlock {label} that are being edited by other users',
+    'privilege-template-unlock-plural': 'true',
+
+    // Global privilege operation prefixes
+    'privilege-prefix-global-read': 'Read',
+    'privilege-prefix-global-readDrafts': 'Read Drafts:',
+    'privilege-prefix-global-readVersions': 'Read Versions:',
+    'privilege-prefix-global-update': 'Update',
+
+    // Global privilege description templates
+    'privilege-template-global-read': 'View {label} content and settings',
+    'privilege-template-global-readDrafts': 'Access and view draft versions of {label}',
+    'privilege-template-global-readVersions': 'Access and view previous versions of {label}',
+    'privilege-template-global-update': 'Modify {label} settings and data',
+
+    // Collection/Global description templates
+    'privilege-collection-description': 'Manage {label} in the system',
+    'privilege-global-description': 'Manage {label} global settings',
+
     // Privilege descriptions
     'privilege-description-collection-create':
       'Allows create operations on {{collection}} collection',

@@ -366,7 +366,8 @@ export const rolesPrivilegesPayloadPlugin =
           !existingPrivilegedCollections.includes(slug) &&
           !excludeCollections.includes(slug) &&
           slug !== 'payload-preferences' &&
-          slug !== 'payload-migrations'
+          slug !== 'payload-migrations' &&
+          slug !== 'payload-locked-documents'
         ) {
           const collection = payload.collections[slug]
           if (collection?.config) {
