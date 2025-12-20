@@ -55,7 +55,10 @@ type AccessFn = (args: AccessArgs) => AccessResult | Promise<AccessResult>
 /* -------------------------------------------------------------------------- */
 
 const wrapAccess =
-  (original: AccessFn | AccessResult | undefined, privilegeKey: string): AccessFn =>
+  (
+    original: AccessFn | AccessResult | undefined,
+    privilegeKey: string,
+  ): ((args: AccessArgs) => Promise<boolean | Where>) =>
   async (args) => {
     let originalResult: AccessResult = true
 
@@ -229,7 +232,7 @@ export const rolesPrivilegesPayloadPlugin =
 
         for (const action of COLLECTION_ACTIONS) {
           const key = generatePrivilegeKey(collection.slug, action)
-          collection.access[action] = wrapAccess(originalAccess[action], key)
+          collection.access[action] = wrapAccess(originalAccess[action], key) as any
         }
       }
     }
@@ -249,7 +252,7 @@ export const rolesPrivilegesPayloadPlugin =
 
         for (const action of GLOBAL_ACTIONS) {
           const key = generateGlobalPrivilegeKey(global.slug, action)
-          global.access[action] = wrapAccess(originalAccess[action], key)
+          global.access[action] = wrapAccess(originalAccess[action], key) as any
         }
       }
     }
