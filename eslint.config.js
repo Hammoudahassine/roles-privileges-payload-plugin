@@ -23,10 +23,14 @@ export const defaultESLintIgnores = [
 ]
 
 export default [
+  {
+    ignores: defaultESLintIgnores,
+  },
   ...payloadEsLintConfig,
   {
     rules: {
       'no-restricted-exports': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
     },
   },
   {
