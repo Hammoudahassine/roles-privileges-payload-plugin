@@ -3,17 +3,18 @@ import type {
   CollectionBeforeDeleteHook,
   CollectionConfig,
 } from 'payload'
+import { APIError } from 'payload'
 import type { GlobalPrivilege } from '../utils/generateGlobalPrivileges.js'
 import type { Privilege } from '../utils/generatePrivileges.js'
 import { hasPrivilege } from '../utils/privilegesAccess.js'
 
-type CollectionData = {
+export type CollectionData = {
   collectionSlug: string
   collectionLabel: { en: string; fr: string }
   privileges: Record<string, Privilege>
 }
 
-type GlobalData = {
+export type GlobalData = {
   globalSlug: string
   globalLabel: { en: string; fr: string }
   privileges: Record<string, GlobalPrivilege>
@@ -22,15 +23,16 @@ type GlobalData = {
 /**
  * Hook to ensure the Super Admin role cannot be deleted
  */
-const ensureSuperAdminDontGetDeleted: CollectionBeforeDeleteHook = async ({ req, id }) => {
+export const ensureSuperAdminDontGetDeleted: CollectionBeforeDeleteHook = async ({ req, id }) => {
   const role = await req.payload.findByID({
     collection: 'roles',
     id,
   })
 
   if (role && role.slug === 'super-admin') {
-    throw new Error(
+    throw new APIError(
       (req.t as (key: string) => string)('plugin-roles-privileges:error-cannot-delete-super-admin'),
+      400,
     )
   }
 }
@@ -38,17 +40,18 @@ const ensureSuperAdminDontGetDeleted: CollectionBeforeDeleteHook = async ({ req,
 /**
  * Hook to ensure the Super Admin role slug cannot be changed
  */
-const ensureSuperAdminDontGetUpdated: CollectionBeforeChangeHook = async ({
+export const ensureSuperAdminDontGetUpdated: CollectionBeforeChangeHook = async ({
   data,
   originalDoc,
   req,
 }) => {
   if (originalDoc && originalDoc.slug === 'super-admin') {
     if (data.slug && data.slug !== 'super-admin') {
-      throw new Error(
+      throw new APIError(
         (req.t as (key: string) => string)(
           'plugin-roles-privileges:error-cannot-modify-super-admin-slug',
         ),
+        400,
       )
     }
   }

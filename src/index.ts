@@ -1,5 +1,5 @@
 import type { AcceptedLanguages } from '@payloadcms/translations'
-import type { Config } from 'payload'
+import type { CollectionConfig, Config } from 'payload'
 
 import { createRolesCollection } from './collections/roles.js'
 import { translations } from './translations/index.js'
@@ -31,6 +31,12 @@ export type RolesPrivilegesPayloadPluginConfig = {
   wrapCollectionAccess?: boolean
   wrapGlobalAccess?: boolean
   seedSuperAdmin?: boolean
+  /**
+   * Custom roles collection configuration.
+   * If provided, this collection will be used instead of the default one.
+   * Use `createRolesCollection` helper to create a base configuration and customize it.
+   */
+  customRolesCollection?: CollectionConfig
 }
 
 export * from './exports/types.js'
@@ -145,7 +151,15 @@ export const rolesPrivilegesPayloadPlugin =
     /*                           Roles collection                               */
     /* ---------------------------------------------------------------------- */
 
-    config.collections.push(createRolesCollection([], []))
+    const rolesCollectionToAdd =
+      pluginOptions.customRolesCollection || createRolesCollection([], [])
+
+    // Ensure the custom collection has slug 'roles'
+    if (rolesCollectionToAdd.slug !== 'roles') {
+      throw new Error('[Roles & Privileges Plugin] Custom roles collection must have slug "roles"')
+    }
+
+    config.collections.push(rolesCollectionToAdd)
 
     const rolesCollection = config.collections.find((c) => c.slug === 'roles')
 

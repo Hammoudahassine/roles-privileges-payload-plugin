@@ -73,6 +73,10 @@ rolesPrivilegesPayloadPlugin({
 
   // Seed a Super Admin role with all privileges on init
   seedSuperAdmin: true,
+
+  // Provide a custom roles collection configuration (optional)
+  // Use createRolesCollection() helper to create a base and customize it
+  customRolesCollection: undefined,
 })
 ```
 
@@ -400,6 +404,90 @@ const privilegeKeys = getAllPrivilegeKeys()
 const globalPrivilegesMap = allGlobalPrivilegesMap
 const allGlobalPrivileges = getAllGlobalPrivileges()
 const globalPrivilegeKeys = getAllGlobalPrivilegeKeys()
+```
+
+### Custom Roles Collection
+
+By default, the plugin creates a standard `roles` collection. However, you can provide your own custom roles collection configuration if you need to:
+
+- Add additional fields to the roles collection
+- Customize the collection's access control
+- Add custom hooks or endpoints
+- Modify the admin UI
+
+```ts
+import {
+  rolesPrivilegesPayloadPlugin,
+  createRolesCollection,
+  ensureSuperAdminDontGetDeleted,
+  ensureSuperAdminDontGetUpdated,
+} from 'roles-privileges-payload-plugin'
+
+// Create a custom roles collection based on the default
+const customRolesCollection = createRolesCollection()
+
+// Customize it by adding additional fields
+customRolesCollection.fields.push({
+  name: 'department',
+  type: 'select',
+  options: ['Engineering', 'Marketing', 'Sales'],
+  admin: {
+    position: 'sidebar',
+  },
+})
+
+// Add custom hooks
+customRolesCollection.hooks = {
+  ...customRolesCollection.hooks,
+  afterChange: [
+    async ({ doc, req }) => {
+      // Send notification when role is changed
+      console.log(`Role ${doc.title} was modified`)
+    },
+  ],
+}
+
+// Use the custom collection in the plugin
+export default buildConfig({
+  collections: [
+    // Your other collections
+  ],
+  plugins: [
+    rolesPrivilegesPayloadPlugin({
+      customRolesCollection,
+    }),
+  ],
+})
+```
+
+**Important Notes:**
+
+- The custom roles collection **must** have the slug `'roles'`
+- The plugin provides helper functions to maintain Super Admin protection:
+  - `createRolesCollection()`: Base factory function to create the roles collection
+  - `ensureSuperAdminDontGetDeleted`: Hook to prevent Super Admin role deletion
+  - `ensureSuperAdminDontGetUpdated`: Hook to prevent Super Admin slug modification
+- You can start with `createRolesCollection()` and customize from there, or build entirely from scratch
+- The `privileges` field must remain for the privilege system to work
+
+**Available Exports for Custom Roles:**
+
+```ts
+import {
+  // Collection creation
+  createRolesCollection,
+
+  // Types
+  CollectionData,
+  GlobalData,
+
+  // Hooks
+  ensureSuperAdminDontGetDeleted,
+  ensureSuperAdminDontGetUpdated,
+
+  // Utilities
+  seedSuperAdminRole,
+} from 'roles-privileges-payload-plugin'
 ```
 
 ## Super Admin Role

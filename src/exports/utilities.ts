@@ -36,3 +36,13 @@ export {
   type CustomGlobalPrivilege,
   type CustomPrivilegeConfig,
 } from '../utils/createCustomPrivilege.js'
+
+// Re-export roles collection creation helper
+export {
+  createRolesCollection,
+  ensureSuperAdminDontGetDeleted,
+  ensureSuperAdminDontGetUpdated,
+} from '../collections/roles.js'
+
+// Re-export seed super admin utility
+export { seedSuperAdminRole } from '../utils/seedSuperAdminRole.js'
