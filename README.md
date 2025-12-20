@@ -633,18 +633,3 @@ describe('Plugin tests', () => {
   })
 })
 ```
-
-## Best practices
-
-With this tutorial and the plugin template, you should have everything you need to start building your own plugin.
-In addition to the setup, here are other best practices aim we follow:
-
-- **Providing an enable / disable option:** For a better user experience, provide a way to disable the plugin without uninstalling it. This is especially important if your plugin adds additional webpack aliases, this will allow you to still let the webpack run to prevent errors.
-- **Include tests in your GitHub CI workflow**: If you’ve configured tests for your package, integrate them into your workflow to run the tests each time you commit to the plugin repository. Learn more about [how to configure tests into your GitHub CI workflow.](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs)
-- **Publish your finished plugin to NPM**: The best way to share and allow others to use your plugin once it is complete is to publish an NPM package. This process is straightforward and well documented, find out more [creating and publishing a NPM package here.](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages/).
-- **Add payload-plugin topic tag**: Apply the tag **payload-plugin **to your GitHub repository. This will boost the visibility of your plugin and ensure it gets listed with [existing payload plugins](https://github.com/topics/payload-plugin).
-- **Use [Semantic Versioning](https://semver.org/) (SemVar)** - With the SemVar system you release version numbers that reflect the nature of changes (major, minor, patch). Ensure all major versions reference their Payload compatibility.
-
-# Questions
-
-Please contact [Payload](mailto:dev@payloadcms.com) with any questions about using this plugin template.

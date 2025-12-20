@@ -1,9 +1,36 @@
 {
   "name": "roles-privileges-payload-plugin",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Automatic role-based access control (RBAC) plugin for Payload CMS that generates granular CRUD privileges for all collections with beautiful UI and zero configuration",
+  "keywords": [
+    "payload",
+    "payload-cms",
+    "payload-plugin",
+    "payloadcms",
+    "roles",
+    "privileges",
+    "rbac",
+    "access-control",
+    "permissions",
+    "authorization",
+    "auth",
+    "user-roles",
+    "role-based",
+    "crud",
+    "admin",
+    "cms",
+    "content-management"
+  ],
   "author": "Hassine",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hammoudahassine/roles-privileges-payload-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hammoudahassine/roles-privileges-payload-plugin/issues"
+  },
+  "homepage": "https://github.com/Hammoudahassine/roles-privileges-payload-plugin#readme",
   "type": "module",
   "exports": {
     ".": {
