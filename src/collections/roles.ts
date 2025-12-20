@@ -3,32 +3,56 @@ import type {
   CollectionBeforeDeleteHook,
   CollectionConfig,
 } from 'payload'
+import { APIError } from 'payload'
+import type { GlobalPrivilege } from '../utils/generateGlobalPrivileges.js'
+import type { Privilege } from '../utils/generatePrivileges.js'
 import { hasPrivilege } from '../utils/privilegesAccess.js'
+
+export type CollectionData = {
+  collectionSlug: string
+  collectionLabel: { en: string; fr: string }
+  privileges: Record<string, Privilege>
+}
+
+export type GlobalData = {
+  globalSlug: string
+  globalLabel: { en: string; fr: string }
+  privileges: Record<string, GlobalPrivilege>
+}
 
 /**
  * Hook to ensure the Super Admin role cannot be deleted
  */
-const ensureSuperAdminDontGetDeleted: CollectionBeforeDeleteHook = async ({ req, id }) => {
+export const ensureSuperAdminDontGetDeleted: CollectionBeforeDeleteHook = async ({ req, id }) => {
   const role = await req.payload.findByID({
     collection: 'roles',
     id,
   })
 
   if (role && role.slug === 'super-admin') {
-    throw new Error('Cannot delete the Super Admin role')
+    throw new APIError(
+      (req.t as (key: string) => string)('plugin-roles-privileges:error-cannot-delete-super-admin'),
+      400,
+    )
   }
 }
 
 /**
  * Hook to ensure the Super Admin role slug cannot be changed
  */
-const ensureSuperAdminDontGetUpdated: CollectionBeforeChangeHook = async ({
+export const ensureSuperAdminDontGetUpdated: CollectionBeforeChangeHook = async ({
   data,
   originalDoc,
+  req,
 }) => {
   if (originalDoc && originalDoc.slug === 'super-admin') {
     if (data.slug && data.slug !== 'super-admin') {
-      throw new Error('Cannot modify the Super Admin role slug')
+      throw new APIError(
+        (req.t as (key: string) => string)(
+          'plugin-roles-privileges:error-cannot-modify-super-admin-slug',
+        ),
+        400,
+      )
     }
   }
   return data
@@ -38,12 +62,17 @@ const ensureSuperAdminDontGetUpdated: CollectionBeforeChangeHook = async ({
  * Roles collection configuration
  * This collection manages user roles and their associated privileges
  */
-export const createRolesCollection = (): CollectionConfig => {
+export const createRolesCollection = (
+  collections?: CollectionData[],
+  globals?: GlobalData[],
+): CollectionConfig => {
   return {
     slug: 'roles',
     labels: {
-      singular: { en: 'Role', fr: 'Rôle' },
-      plural: { en: 'Roles', fr: 'Rôles' },
+      singular: ({ t }) =>
+        (t as (key: string) => string)('plugin-roles-privileges:roles-collection-label-singular'),
+      plural: ({ t }) =>
+        (t as (key: string) => string)('plugin-roles-privileges:roles-collection-label-plural'),
     },
     access: {
       // Allow authenticated users to read roles (needed for user role resolution)
@@ -62,25 +91,19 @@ export const createRolesCollection = (): CollectionConfig => {
         name: 'title',
         type: 'text',
         required: true,
-        label: {
-          en: 'Role Title',
-          fr: 'Titre du rôle',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-title-label'),
       },
       {
         name: 'slug',
         type: 'text',
         required: true,
         unique: true,
-        label: {
-          en: 'Slug',
-          fr: 'Slug',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-slug-label'),
         admin: {
-          description: {
-            en: 'Unique identifier for this role',
-            fr: 'Identifiant unique pour ce rôle',
-          },
+          description: ({ t }) =>
+            (t as (key: string) => string)('plugin-roles-privileges:roles-field-slug-description'),
         },
         hooks: {
           beforeValidate: [
@@ -99,17 +122,21 @@ export const createRolesCollection = (): CollectionConfig => {
       {
         name: 'privileges',
         type: 'array',
-        label: {
-          en: 'Privileges',
-          fr: 'Privilèges',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-privileges-label'),
         admin: {
-          description: {
-            en: 'Select the privileges this role should have',
-            fr: 'Sélectionnez les privilèges que ce rôle devrait avoir',
-          },
+          description: ({ t }) =>
+            (t as (key: string) => string)(
+              'plugin-roles-privileges:roles-field-privileges-description',
+            ),
           components: {
-            Field: 'roles-privileges-payload-plugin/client#PrivilegesSelect',
+            Field: {
+              path: 'roles-privileges-payload-plugin/client#PrivilegesSelect',
+              clientProps: {
+                collections: collections || [],
+                globals: globals || [],
+              },
+            },
           },
         },
         minRows: 1,
@@ -118,25 +145,23 @@ export const createRolesCollection = (): CollectionConfig => {
             name: 'privilege',
             type: 'text',
             required: true,
-            label: {
-              en: 'Privilege',
-              fr: 'Privilège',
-            },
+            label: ({ t }) =>
+              (t as (key: string) => string)(
+                'plugin-roles-privileges:roles-field-privileges-label',
+              ),
           },
         ],
       },
       {
         name: 'description',
         type: 'textarea',
-        label: {
-          en: 'Description',
-          fr: 'Description',
-        },
+        label: ({ t }) =>
+          (t as (key: string) => string)('plugin-roles-privileges:roles-field-description-label'),
         admin: {
-          description: {
-            en: 'Optional description of this role',
-            fr: 'Description optionnelle de ce rôle',
-          },
+          description: ({ t }) =>
+            (t as (key: string) => string)(
+              'plugin-roles-privileges:roles-field-description-description',
+            ),
         },
       },
     ],

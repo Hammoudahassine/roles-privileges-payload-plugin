@@ -1,5 +1,9 @@
 // Re-export utility functions for access control
 export {
+  checkAllPrivileges,
+  checkAnyPrivilege,
+  checkPrivilege,
+  checkPrivileges,
   hasAllPrivileges,
   hasAnyPrivilege,
   hasPrivilege,
@@ -23,3 +27,22 @@ export {
   getAllGlobalPrivilegeKeys,
   getAllGlobalPrivileges,
 } from '../utils/generateGlobalPrivileges.js'
+
+// Re-export custom privilege registration utilities
+export {
+  customPrivilegesRegistry,
+  registerCustomPrivilege,
+  registerCustomPrivileges,
+  type CustomGlobalPrivilege,
+  type CustomPrivilegeConfig,
+} from '../utils/createCustomPrivilege.js'
+
+// Re-export roles collection creation helper
+export {
+  createRolesCollection,
+  ensureSuperAdminDontGetDeleted,
+  ensureSuperAdminDontGetUpdated,
+} from '../collections/roles.js'
+
+// Re-export seed super admin utility
+export { seedSuperAdminRole } from '../utils/seedSuperAdminRole.js'

@@ -5,8 +5,7 @@ export type {
   GlobalPrivilegeType,
 } from '../utils/generateGlobalPrivileges.js'
 
-export type {
-  CollectionPrivileges,
-  Privilege,
-  PrivilegeType,
-} from '../utils/generatePrivileges.js'
+export type { CollectionPrivileges, Privilege, PrivilegeType } from '../utils/generatePrivileges.js'
+
+// Re-export roles collection types
+export type { CollectionData, GlobalData } from '../collections/roles.js'

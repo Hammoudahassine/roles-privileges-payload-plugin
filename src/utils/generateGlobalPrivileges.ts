@@ -1,23 +1,19 @@
 import type { GlobalConfig } from 'payload'
+import { translations } from '../translations/index.js'
 
 /**
- * Available privilege types for global operations (only read and update)
+ * Available privilege types for all global operations
  */
-export type GlobalPrivilegeType = 'read' | 'update'
+export type GlobalPrivilegeType = 'read' | 'readDrafts' | 'readVersions' | 'update'
 
 /**
  * Interface for a single privilege
  */
 export interface GlobalPrivilege {
   privilegeKey: string
-  label: {
-    en: string
-    fr: string
-  }
-  description: {
-    en: string
-    fr: string
-  }
+  label: Record<string, string>
+  description: Record<string, string>
+  isCustom?: boolean
 }
 
 /**
@@ -25,12 +21,12 @@ export interface GlobalPrivilege {
  */
 export interface GlobalPrivileges {
   globalSlug: string
-  description: {
-    en: string
-    fr: string
-  }
+  globalLabel: Record<string, string>
+  description: Record<string, string>
   privileges: {
     read: GlobalPrivilege
+    readDrafts: GlobalPrivilege
+    readVersions: GlobalPrivilege
     update: GlobalPrivilege
   }
 }
@@ -58,30 +54,34 @@ const capitalize = (str: string): string => {
 }
 
 /**
- * Get label from global config or generate from slug
+ * Get label from global config or use slug
  */
-const getGlobalLabel = (global: GlobalConfig): { en: string; fr: string } => {
+const getGlobalLabel = (global: GlobalConfig): Record<string, string> => {
   if (global.label) {
     if (typeof global.label === 'string') {
-      return {
-        en: global.label,
-        fr: global.label,
-      }
+      // Return the string for all languages (will be used as fallback)
+      return { _default: global.label }
     }
-    if (typeof global.label === 'function') {
-      const label = capitalize(global.slug.replace(/-/g, ' '))
-      return { en: label, fr: label }
-    }
-    const labels = global.label as Record<string, string>
-    return {
-      en: labels.en || capitalize(global.slug),
-      fr: labels.fr || capitalize(global.slug),
+    if (typeof global.label === 'object' && !Array.isArray(global.label)) {
+      return global.label as Record<string, string>
     }
   }
 
-  // Default to capitalized slug
-  const label = capitalize(global.slug.replace(/-/g, ' '))
-  return { en: label, fr: label }
+  // Default to slug
+  return { _default: global.slug }
+}
+
+/**
+ * Get operation prefix translations for each language
+ */
+const getGlobalOperationPrefix = (operation: GlobalPrivilegeType, lang: string): string => {
+  const langTranslations = translations[lang] || translations.en
+  const key =
+    `privilege-prefix-global-${operation}` as keyof (typeof langTranslations)['plugin-roles-privileges']
+  return (
+    (langTranslations['plugin-roles-privileges'][key] as string) ||
+    (translations.en['plugin-roles-privileges'][key] as string)
+  )
 }
 
 /**
@@ -89,19 +89,36 @@ const getGlobalLabel = (global: GlobalConfig): { en: string; fr: string } => {
  */
 const getGlobalOperationLabels = (
   operation: GlobalPrivilegeType,
-  label: { en: string; fr: string },
-): { en: string; fr: string } => {
-  const operationMap = {
-    read: {
-      en: `Read ${label.en}`,
-      fr: `Lire ${label.fr}`,
-    },
-    update: {
-      en: `Update ${label.en}`,
-      fr: `Modifier ${label.fr}`,
-    },
+  label: Record<string, string>,
+): Record<string, string> => {
+  const result: Record<string, string> = {}
+
+  // Get all available languages from label
+  const languages = Object.keys(label)
+
+  for (const lang of languages) {
+    const labelText = label[lang]
+    const prefix = getGlobalOperationPrefix(operation, lang)
+    result[lang] = `${prefix} ${labelText}`
   }
-  return operationMap[operation]
+
+  return result
+}
+
+/**
+ * Get operation description templates for each language
+ */
+const getGlobalOperationDescriptionTemplate = (
+  operation: GlobalPrivilegeType,
+  lang: string,
+): string => {
+  const langTranslations = translations[lang] || translations.en
+  const key =
+    `privilege-template-global-${operation}` as keyof (typeof langTranslations)['plugin-roles-privileges']
+  return (
+    (langTranslations['plugin-roles-privileges'][key] as string) ||
+    (translations.en['plugin-roles-privileges'][key] as string)
+  )
 }
 
 /**
@@ -109,19 +126,20 @@ const getGlobalOperationLabels = (
  */
 const getGlobalOperationDescriptions = (
   operation: GlobalPrivilegeType,
-  label: { en: string; fr: string },
-): { en: string; fr: string } => {
-  const descriptionMap = {
-    read: {
-      en: `View ${label.en.toLowerCase()} content and settings`,
-      fr: `Voir le contenu et les paramètres de ${label.fr.toLowerCase()}`,
-    },
-    update: {
-      en: `Modify ${label.en.toLowerCase()} settings and data`,
-      fr: `Modifier les paramètres et données de ${label.fr.toLowerCase()}`,
-    },
+  label: Record<string, string>,
+): Record<string, string> => {
+  const result: Record<string, string> = {}
+
+  // Get all available languages
+  const languages = Object.keys(label)
+
+  for (const lang of languages) {
+    const labelText = label[lang].toLowerCase()
+    const template = getGlobalOperationDescriptionTemplate(operation, lang)
+    result[lang] = template.replace('{label}', labelText)
   }
-  return descriptionMap[operation]
+
+  return result
 }
 
 /**
@@ -130,7 +148,7 @@ const getGlobalOperationDescriptions = (
 const generateGlobalPrivilege = (
   globalSlug: string,
   operation: GlobalPrivilegeType,
-  label: { en: string; fr: string },
+  label: Record<string, string>,
 ): GlobalPrivilege => {
   return {
     privilegeKey: generateGlobalPrivilegeKey(globalSlug, operation),
@@ -145,14 +163,25 @@ const generateGlobalPrivilege = (
 export const generateGlobalPrivileges = (global: GlobalConfig): GlobalPrivileges => {
   const label = getGlobalLabel(global)
 
+  const description: Record<string, string> = {}
+  const languages = Object.keys(label)
+  for (const lang of languages) {
+    const labelText = label[lang].toLowerCase()
+    const langTranslations = translations[lang] || translations.en
+    const template =
+      (langTranslations['plugin-roles-privileges']['privilege-global-description'] as string) ||
+      (translations.en['plugin-roles-privileges']['privilege-global-description'] as string)
+    description[lang] = template.replace('{label}', labelText)
+  }
+
   const globalPrivileges: GlobalPrivileges = {
     globalSlug: global.slug,
-    description: {
-      en: `Manage ${label.en.toLowerCase()} global settings`,
-      fr: `Gérer les paramètres globaux de ${label.fr.toLowerCase()}`,
-    },
+    globalLabel: label,
+    description,
     privileges: {
       read: generateGlobalPrivilege(global.slug, 'read', label),
+      readDrafts: generateGlobalPrivilege(global.slug, 'readDrafts', label),
+      readVersions: generateGlobalPrivilege(global.slug, 'readVersions', label),
       update: generateGlobalPrivilege(global.slug, 'update', label),
     },
   }

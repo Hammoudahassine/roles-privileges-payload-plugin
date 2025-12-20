@@ -237,3 +237,59 @@ return Array.from(privileges)
 const userPrivileges = await checkUserPrivileges(payload, 'user-id')
 console.log(userPrivileges)
 // ['posts-read', 'posts-create', 'pages-read', ...]
+
+// Example: Custom Roles Collection
+import { buildConfig } from 'payload'
+import {
+rolesPrivilegesPayloadPlugin,
+createRolesCollection,
+} from 'roles-privileges-payload-plugin'
+
+// Create a custom roles collection with additional fields
+const customRolesCollection = createRolesCollection()
+
+// Add a department field
+customRolesCollection.fields.push({
+name: 'department',
+type: 'select',
+options: ['Engineering', 'Marketing', 'Sales', 'Support'],
+required: true,
+admin: {
+position: 'sidebar',
+},
+})
+
+// Add an expiration date
+customRolesCollection.fields.push({
+name: 'expiresAt',
+type: 'date',
+admin: {
+position: 'sidebar',
+description: 'When this role expires',
+},
+})
+
+// Add custom hooks
+customRolesCollection.hooks = {
+...customRolesCollection.hooks, // Preserve Super Admin protection
+afterChange: [
+async ({ doc, req, operation }) => {
+req.payload.logger.info(
+`Role "${doc.title}" was ${operation === 'create' ? 'created' : 'updated'}`
+)
+},
+],
+}
+
+export default buildConfig({
+collections: [
+// Your other collections
+],
+plugins: [
+rolesPrivilegesPayloadPlugin({
+customRolesCollection,
+}),
+],
+})
+
+// For more details, see CUSTOM_ROLES_COLLECTION.md

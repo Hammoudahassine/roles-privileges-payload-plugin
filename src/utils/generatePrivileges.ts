@@ -1,23 +1,26 @@
 import type { CollectionConfig } from 'payload'
+import { translations } from '../translations/index.js'
 
 /**
- * Available privilege types for CRUD operations
+ * Available privilege types for all collection operations
  */
-export type PrivilegeType = 'create' | 'read' | 'update' | 'delete'
+export type PrivilegeType =
+  | 'admin'
+  | 'create'
+  | 'read'
+  | 'readVersions'
+  | 'update'
+  | 'delete'
+  | 'unlock'
 
 /**
  * Interface for a single privilege
  */
 export interface Privilege {
   privilegeKey: string
-  label: {
-    en: string
-    fr: string
-  }
-  description: {
-    en: string
-    fr: string
-  }
+  label: Record<string, string>
+  description: Record<string, string>
+  isCustom?: boolean
 }
 
 /**
@@ -25,15 +28,16 @@ export interface Privilege {
  */
 export interface CollectionPrivileges {
   collectionSlug: string
-  description: {
-    en: string
-    fr: string
-  }
+  collectionLabel: Record<string, string>
+  description: Record<string, string>
   privileges: {
+    admin: Privilege
     create: Privilege
     read: Privilege
+    readVersions: Privilege
     update: Privilege
     delete: Privilege
+    unlock: Privilege
   }
 }
 
@@ -57,57 +61,55 @@ const capitalize = (str: string): string => {
 }
 
 /**
- * Get singular label from collection config or generate from slug
+ * Get singular label from collection config or use slug
  */
-const getSingularLabel = (collection: CollectionConfig): { en: string; fr: string } => {
+const getSingularLabel = (collection: CollectionConfig): Record<string, string> => {
   if (collection.labels?.singular) {
     if (typeof collection.labels.singular === 'string') {
-      return {
-        en: collection.labels.singular,
-        fr: collection.labels.singular,
-      }
+      // Return the string for all languages (will be used as fallback)
+      return { _default: collection.labels.singular }
     }
-    if (typeof collection.labels.singular === 'function') {
-      const label = capitalize(collection.slug.replace(/-/g, ' '))
-      return { en: label, fr: label }
-    }
-    const singularLabels = collection.labels.singular as Record<string, string>
-    return {
-      en: singularLabels.en || capitalize(collection.slug),
-      fr: singularLabels.fr || capitalize(collection.slug),
+    if (
+      typeof collection.labels.singular === 'object' &&
+      !Array.isArray(collection.labels.singular)
+    ) {
+      return collection.labels.singular as Record<string, string>
     }
   }
 
-  // Default to capitalized slug
-  const label = capitalize(collection.slug.replace(/-/g, ' '))
-  return { en: label, fr: label }
+  // Default to slug
+  return { _default: collection.slug }
 }
 
 /**
- * Get plural label from collection config or generate from slug
+ * Get plural label from collection config or use slug
  */
-const getPluralLabel = (collection: CollectionConfig): { en: string; fr: string } => {
+const getPluralLabel = (collection: CollectionConfig): Record<string, string> => {
   if (collection.labels?.plural) {
     if (typeof collection.labels.plural === 'string') {
-      return {
-        en: collection.labels.plural,
-        fr: collection.labels.plural,
-      }
+      // Return the string for all languages (will be used as fallback)
+      return { _default: collection.labels.plural }
     }
-    if (typeof collection.labels.plural === 'function') {
-      const label = capitalize(collection.slug.replace(/-/g, ' ')) + 's'
-      return { en: label, fr: label }
-    }
-    const pluralLabels = collection.labels.plural as Record<string, string>
-    return {
-      en: pluralLabels.en || capitalize(collection.slug) + 's',
-      fr: pluralLabels.fr || capitalize(collection.slug) + 's',
+    if (typeof collection.labels.plural === 'object' && !Array.isArray(collection.labels.plural)) {
+      return collection.labels.plural as Record<string, string>
     }
   }
 
-  // Default to capitalized slug with 's'
-  const label = capitalize(collection.slug.replace(/-/g, ' ')) + 's'
-  return { en: label, fr: label }
+  // Default to slug
+  return { _default: collection.slug }
+}
+
+/**
+ * Get operation prefix translations for each language
+ */
+const getOperationPrefix = (operation: PrivilegeType, lang: string): string => {
+  const langTranslations = translations[lang] || translations.en
+  const key =
+    `privilege-prefix-${operation}` as keyof (typeof langTranslations)['plugin-roles-privileges']
+  return (
+    (langTranslations['plugin-roles-privileges'][key] as string) ||
+    (translations.en['plugin-roles-privileges'][key] as string)
+  )
 }
 
 /**
@@ -115,27 +117,41 @@ const getPluralLabel = (collection: CollectionConfig): { en: string; fr: string 
  */
 const getOperationLabels = (
   operation: PrivilegeType,
-  singularLabel: { en: string; fr: string },
-): { en: string; fr: string } => {
-  const operationMap = {
-    create: {
-      en: `Create ${singularLabel.en}`,
-      fr: `Créer ${singularLabel.fr}`,
-    },
-    read: {
-      en: `Read ${singularLabel.en}`,
-      fr: `Lire ${singularLabel.fr}`,
-    },
-    update: {
-      en: `Update ${singularLabel.en}`,
-      fr: `Modifier ${singularLabel.fr}`,
-    },
-    delete: {
-      en: `Delete ${singularLabel.en}`,
-      fr: `Supprimer ${singularLabel.fr}`,
-    },
+  singularLabel: Record<string, string>,
+): Record<string, string> => {
+  const result: Record<string, string> = {}
+
+  // Get all available languages from singularLabel
+  const languages = Object.keys(singularLabel)
+
+  for (const lang of languages) {
+    const label = singularLabel[lang]
+    const prefix = getOperationPrefix(operation, lang)
+    result[lang] = operation === 'readVersions' ? `${prefix} ${label}` : `${prefix} ${label}`
   }
-  return operationMap[operation]
+
+  return result
+}
+
+/**
+ * Get operation description templates for each language
+ */
+const getOperationDescriptionTemplate = (
+  operation: PrivilegeType,
+  lang: string,
+): { template: string; usePlural: boolean } => {
+  const langTranslations = translations[lang] || translations.en
+  const templateKey =
+    `privilege-template-${operation}` as keyof (typeof langTranslations)['plugin-roles-privileges']
+  const pluralKey =
+    `privilege-template-${operation}-plural` as keyof (typeof langTranslations)['plugin-roles-privileges']
+
+  const template =
+    (langTranslations['plugin-roles-privileges'][templateKey] as string) ||
+    (translations.en['plugin-roles-privileges'][templateKey] as string)
+  const usePlural = (langTranslations['plugin-roles-privileges'][pluralKey] as string) === 'true'
+
+  return { template, usePlural }
 }
 
 /**
@@ -143,28 +159,21 @@ const getOperationLabels = (
  */
 const getOperationDescriptions = (
   operation: PrivilegeType,
-  singularLabel: { en: string; fr: string },
-  pluralLabel: { en: string; fr: string },
-): { en: string; fr: string } => {
-  const descriptionMap = {
-    create: {
-      en: `Ability to create new ${pluralLabel.en.toLowerCase()}`,
-      fr: `Possibilité de créer de nouveaux ${pluralLabel.fr.toLowerCase()}`,
-    },
-    read: {
-      en: `View ${singularLabel.en.toLowerCase()} content and information`,
-      fr: `Voir le contenu et les informations de ${singularLabel.fr.toLowerCase()}`,
-    },
-    update: {
-      en: `Modify existing ${singularLabel.en.toLowerCase()} data`,
-      fr: `Modifier les données existantes de ${singularLabel.fr.toLowerCase()}`,
-    },
-    delete: {
-      en: `Remove ${pluralLabel.en.toLowerCase()} from the system`,
-      fr: `Supprimer ${pluralLabel.fr.toLowerCase()} du système`,
-    },
+  singularLabel: Record<string, string>,
+  pluralLabel: Record<string, string>,
+): Record<string, string> => {
+  const result: Record<string, string> = {}
+
+  // Get all available languages
+  const languages = Object.keys(singularLabel)
+
+  for (const lang of languages) {
+    const { template, usePlural } = getOperationDescriptionTemplate(operation, lang)
+    const labelToUse = usePlural ? pluralLabel[lang] : singularLabel[lang]
+    result[lang] = template.replace('{label}', labelToUse.toLowerCase())
   }
-  return descriptionMap[operation]
+
+  return result
 }
 
 /**
@@ -173,8 +182,8 @@ const getOperationDescriptions = (
 const generatePrivilege = (
   collectionSlug: string,
   operation: PrivilegeType,
-  singularLabel: { en: string; fr: string },
-  pluralLabel: { en: string; fr: string },
+  singularLabel: Record<string, string>,
+  pluralLabel: Record<string, string>,
 ): Privilege => {
   return {
     privilegeKey: generatePrivilegeKey(collectionSlug, operation),
@@ -192,17 +201,29 @@ export const generateCollectionPrivileges = (
   const singularLabel = getSingularLabel(collection)
   const pluralLabel = getPluralLabel(collection)
 
+  const description: Record<string, string> = {}
+  const languages = Object.keys(pluralLabel)
+  for (const lang of languages) {
+    const plural = pluralLabel[lang].toLowerCase()
+    const langTranslations = translations[lang] || translations.en
+    const template =
+      (langTranslations['plugin-roles-privileges']['privilege-collection-description'] as string) ||
+      (translations.en['plugin-roles-privileges']['privilege-collection-description'] as string)
+    description[lang] = template.replace('{label}', plural)
+  }
+
   const collectionPrivileges: CollectionPrivileges = {
     collectionSlug: collection.slug,
-    description: {
-      en: `Manage ${pluralLabel.en.toLowerCase()} in the system`,
-      fr: `Gérer ${pluralLabel.fr.toLowerCase()} dans le système`,
-    },
+    collectionLabel: pluralLabel,
+    description,
     privileges: {
+      admin: generatePrivilege(collection.slug, 'admin', singularLabel, pluralLabel),
       create: generatePrivilege(collection.slug, 'create', singularLabel, pluralLabel),
       read: generatePrivilege(collection.slug, 'read', singularLabel, pluralLabel),
+      readVersions: generatePrivilege(collection.slug, 'readVersions', singularLabel, pluralLabel),
       update: generatePrivilege(collection.slug, 'update', singularLabel, pluralLabel),
       delete: generatePrivilege(collection.slug, 'delete', singularLabel, pluralLabel),
+      unlock: generatePrivilege(collection.slug, 'unlock', singularLabel, pluralLabel),
     },
   }
 
