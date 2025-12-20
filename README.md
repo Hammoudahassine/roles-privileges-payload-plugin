@@ -53,6 +53,9 @@ That's it! The plugin will:
 
 ```ts
 rolesPrivilegesPayloadPlugin({
+  // Enable the plugin (defaults to true). When false, the plugin does nothing.
+  enable: true,
+
   // Disable the plugin (roles collection will still be added for schema consistency)
   disabled: false,
 
@@ -466,6 +469,7 @@ import type {
 
 ```ts
 type RolesPrivilegesPayloadPluginConfig = {
+  enable?: boolean
   disabled?: boolean
   excludeCollections?: string[]
   excludeGlobals?: string[]
