@@ -1,6 +1,6 @@
 {
   "name": "roles-privileges-payload-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Automatic role-based access control (RBAC) plugin for Payload CMS that generates granular CRUD privileges for all collections with beautiful UI and zero configuration",
   "keywords": [
     "payload",
@@ -106,6 +106,9 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "rimraf": "3.0.2",
+    "semantic-release": "^24.2.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "sharp": "0.34.2",
     "sort-package-json": "^2.10.0",
     "typescript": "5.7.3",

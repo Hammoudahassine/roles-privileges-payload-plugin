@@ -1,10 +1,11 @@
-# Automated release workflow using semantic-release
-# Triggers on push to main branch
-# For more information see: https://semantic-release.gitbook.io/
-
-name: Release
+name: CI
 
 on:
+  pull_request:
+    branches:
+      - main
+      - next
+      - beta
   push:
     branches:
       - main
@@ -12,19 +13,11 @@ on:
       - beta
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,11 +45,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build package
-        run: pnpm run build
+      - name: Lint
+        run: pnpm run lint
 
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+      - name: Build
+        run: pnpm run build

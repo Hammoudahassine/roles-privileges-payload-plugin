@@ -1,5 +1,9 @@
 # Roles & Privileges Payload Plugin
 
+[![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![npm version](https://badge.fury.io/js/roles-privileges-payload-plugin.svg)](https://www.npmjs.com/package/roles-privileges-payload-plugin)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A powerful Payload CMS plugin that automatically generates role-based access control (RBAC) with granular CRUD privileges for all your collections.
 
 ## Features
