@@ -79,6 +79,7 @@ export type PluginTranslations = {
 
     'roles-field-slug-label': string
     'roles-field-title-label': string
+    'user-roles-field-description': string
   }
 }
 
