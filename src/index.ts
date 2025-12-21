@@ -5,6 +5,7 @@ import type { PluginDefaultTranslationsObject } from './translations/types.js'
 
 import { createRolesCollection } from './collections/roles.js'
 import { translations } from './translations/index.js'
+import { wrapUserCollectionWithSuperAdminHook } from './utils/assignSuperAdminToFirstUser.js'
 import { customPrivilegesRegistry } from './utils/createCustomPrivilege.js'
 import {
   allGlobalPrivilegesMap,
@@ -23,6 +24,11 @@ import { seedSuperAdminRole } from './utils/seedSuperAdminRole.js'
 /* -------------------------------------------------------------------------- */
 
 export type RolesPrivilegesPayloadPluginConfig = {
+  /**
+   * Automatically assign Super Admin role to the first user created in the system
+   * @default true
+   */
+  assignSuperAdminToFirstUser?: boolean
   /**
    * Custom roles collection configuration.
    * If provided, this collection will be used instead of the default one.
@@ -124,6 +130,7 @@ export const rolesPrivilegesPayloadPlugin =
   (pluginOptions: RolesPrivilegesPayloadPluginConfig = {}) =>
   (config: Config): Config => {
     const {
+      assignSuperAdminToFirstUser = true,
       enable = true,
       excludeCollections = [],
       excludeGlobals = [],
@@ -206,6 +213,25 @@ export const rolesPrivilegesPayloadPlugin =
           }
         }
       }
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /*                    First user super admin assignment                     */
+    /* ---------------------------------------------------------------------- */
+
+    if (assignSuperAdminToFirstUser) {
+      // Find the user collection from config.admin.user
+      const userCollectionSlug = config.admin?.user || 'users'
+
+      // Find and wrap the user collection
+      const userCollectionIndex = config.collections.findIndex((c) => c.slug === userCollectionSlug)
+
+      if (userCollectionIndex !== -1) {
+        config.collections[userCollectionIndex] = wrapUserCollectionWithSuperAdminHook(
+          config.collections[userCollectionIndex],
+        )
+      }
+      // If user collection not found, the hook simply won't be applied
     }
 
     if (pluginOptions.disabled) {

@@ -52,6 +52,17 @@ That's it! The plugin will:
 4. Add a `roles` collection with a privilege selector UI
 5. Wrap all collection and global access controls with privilege checks
 6. Seed a Super Admin role with all privileges
+7. **Automatically assign the Super Admin role to the first user created** 🎯
+
+### First User Super Admin Assignment
+
+By default, the plugin automatically assigns the Super Admin role to the first user created in your system. This ensures that:
+
+- Your initial user has full access to configure the system
+- You don't get locked out during initial setup
+- The user collection is automatically detected from `config.admin.user` (defaults to `'users'`)
+
+This feature can be disabled by setting `assignSuperAdminToFirstUser: false` in the plugin options.
 
 ## Configuration Options
 
@@ -77,6 +88,10 @@ rolesPrivilegesPayloadPlugin({
 
   // Seed a Super Admin role with all privileges on init
   seedSuperAdmin: true,
+
+  // Automatically assign Super Admin role to the first user created (defaults to true)
+  // Ensures the initial user has full system access
+  assignSuperAdminToFirstUser: true,
 
   // Provide a custom roles collection configuration (optional)
   // Use createRolesCollection() helper to create a base and customize it
