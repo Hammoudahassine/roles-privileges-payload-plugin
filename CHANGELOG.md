@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/compare/v1.2.1...v1.2.2) (2025-12-21)
+
+
+### Bug Fixes
+
+* use configurable rolesFieldName in privilege access functions ([d817dbd](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/commit/d817dbdc1d1916000420b37230f3d2d83bc8ffda))
+
 ## [1.2.1](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/compare/v1.2.0...v1.2.1) (2025-12-21)
 
 
