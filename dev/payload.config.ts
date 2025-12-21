@@ -100,13 +100,6 @@ const buildConfigWithMemoryDB = async () => {
             type: 'text',
             required: true,
           },
-          {
-            name: 'roles',
-            type: 'relationship',
-            relationTo: 'roles',
-            hasMany: true,
-            required: true,
-          },
         ],
       },
       {
