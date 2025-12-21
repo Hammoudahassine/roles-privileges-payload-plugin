@@ -17,7 +17,7 @@ import {
   generateCollectionPrivileges,
   generatePrivilegeKey,
 } from './utils/generatePrivileges.js'
-import { hasPrivilege } from './utils/privilegesAccess.js'
+import { hasPrivilege, setRolesFieldName } from './utils/privilegesAccess.js'
 import { seedSuperAdminRole } from './utils/seedSuperAdminRole.js'
 /* -------------------------------------------------------------------------- */
 /*                                   Types                                    */
@@ -148,6 +148,9 @@ export const rolesPrivilegesPayloadPlugin =
     if (!enable) {
       return config
     }
+
+    // Configure the roles field name for privilege checking
+    setRolesFieldName(rolesFieldName)
 
     config.collections ??= []
     config.globals ??= []

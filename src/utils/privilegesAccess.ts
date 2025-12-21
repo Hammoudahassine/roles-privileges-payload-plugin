@@ -1,6 +1,21 @@
 import type { Access, AccessArgs } from 'payload'
 
 /**
+ * Internal configuration for the roles field name
+ * @internal
+ */
+let rolesFieldName = 'roles'
+
+/**
+ * Set the roles field name to use when checking privileges
+ * @param fieldName - The name of the roles field in the user collection
+ * @internal
+ */
+export const setRolesFieldName = (fieldName: string): void => {
+  rolesFieldName = fieldName
+}
+
+/**
  * Check if user has specific privileges based on their roles
  * @param privilegeArrays - Multiple arrays of privileges. Within each array is AND logic, between arrays is OR logic
  * @returns Access function that checks if user has required privileges
@@ -23,8 +38,8 @@ export const privilegesAccess = (privilegeArrays: string[][]): Access => {
     // Get all privileges from user's roles
     const userPrivileges = new Set<string>()
 
-    if (user.roles && Array.isArray(user.roles)) {
-      for (const role of user.roles) {
+    if (user[rolesFieldName] && Array.isArray(user[rolesFieldName])) {
+      for (const role of user[rolesFieldName]) {
         if (typeof role === 'object' && role !== null && 'privileges' in role) {
           const rolePrivileges = role.privileges
           if (Array.isArray(rolePrivileges)) {
@@ -69,8 +84,8 @@ export const checkPrivileges = (privilegeArrays: string[][], user: any): boolean
   // Get all privileges from user's roles
   const userPrivileges = new Set<string>()
 
-  if (user.roles && Array.isArray(user.roles)) {
-    for (const role of user.roles) {
+  if (user[rolesFieldName] && Array.isArray(user[rolesFieldName])) {
+    for (const role of user[rolesFieldName]) {
       if (typeof role === 'object' && role !== null && 'privileges' in role) {
         const rolePrivileges = role.privileges
         if (Array.isArray(rolePrivileges)) {
