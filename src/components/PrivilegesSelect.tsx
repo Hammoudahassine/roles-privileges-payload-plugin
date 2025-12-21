@@ -19,12 +19,6 @@ type GlobalPrivileges = {
   privileges: Record<string, GlobalPrivilege>
 }
 
-type PrivilegesSelectProps = {
-  collections: CollectionPrivileges[]
-  globals: GlobalPrivileges[]
-  path: string
-}
-
 /**
  * Custom array field component for managing privileges in Payload CMS
  * @component
@@ -34,7 +28,15 @@ type PrivilegesSelectProps = {
  * @param {GlobalPrivileges[]} props.globals - Globals with their privileges
  */
 const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
-  const { collections = [], globals = [], path } = props as any
+  const {
+    collections = [],
+    globals = [],
+    path,
+  } = props as {
+    collections?: CollectionPrivileges[]
+    globals?: GlobalPrivileges[]
+    path: string
+  }
   const { rows } = useField({ hasRows: true, path })
   const { addFieldRow, removeFieldRow, setModified } = useForm()
   const { dispatch } = useFormFields(([_, dispatch]) => ({ dispatch }))
@@ -42,9 +44,12 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
   const locale = i18n?.language || 'en'
 
   // Helper to get label in current locale with fallback
-  const getLabel = (labels: Record<string, string>): string => {
-    return labels[locale] || labels._default || labels.en || Object.values(labels)[0] || ''
-  }
+  const getLabel = useCallback(
+    (labels: Record<string, string>): string => {
+      return labels[locale] || labels._default || labels.en || Object.values(labels)[0] || ''
+    },
+    [locale],
+  )
 
   // Use the collections and globals from props
   const collectionsArray = collections
@@ -84,7 +89,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
       }
       return privilegeKey
     },
-    [collectionsArray, globalsArray, locale],
+    [collectionsArray, globalsArray, getLabel],
   )
 
   /**
@@ -149,7 +154,9 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   }}
                 >
                   <div style={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
-                    <span>📦</span>
+                    <span aria-label="Collection" role="img">
+                      📦
+                    </span>
                     <span style={{ fontWeight: 500 }}>
                       {getLabel(collection.collectionLabel) || collection.collectionSlug}
                     </span>
@@ -198,6 +205,8 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                       }}
                     >
                       <label
+                        aria-label={`Select privilege: ${getLabel(privilege.label)}`}
+                        htmlFor={`global-privilege-${privilege.privilegeKey}`}
                         style={{
                           alignItems: 'flex-start',
                           cursor: 'pointer',
@@ -206,7 +215,9 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                         }}
                       >
                         <input
+                          aria-label={`Select privilege: ${getLabel(privilege.label)}`}
                           checked={isSelected}
+                          id={`global-privilege-${privilege.privilegeKey}`}
                           onChange={() => handlePrivilegeToggle(privilege)}
                           style={{ cursor: 'pointer', marginTop: '2px' }}
                           type="checkbox"
@@ -223,7 +234,15 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                               marginBottom: '4px',
                             }}
                           >
-                            {isCustom && <span style={{ fontSize: '16px' }}>⭐</span>}
+                            {isCustom && (
+                              <span
+                                aria-label="Custom privilege"
+                                role="img"
+                                style={{ fontSize: '16px' }}
+                              >
+                                ⭐
+                              </span>
+                            )}
                             {getLabel(privilege.label)}
                           </div>
                           <div
@@ -281,7 +300,9 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   }}
                 >
                   <div style={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
-                    <span>🌐</span>
+                    <span aria-label="Global" role="img">
+                      🌐
+                    </span>
                     <span style={{ fontWeight: 500 }}>
                       {getLabel(global.globalLabel) || global.globalSlug}
                     </span>
@@ -330,6 +351,8 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                       }}
                     >
                       <label
+                        aria-label={`Select privilege: ${getLabel(privilege.label)}`}
+                        htmlFor={`global-privilege-${privilege.privilegeKey}`}
                         style={{
                           alignItems: 'flex-start',
                           cursor: 'pointer',
@@ -338,7 +361,9 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                         }}
                       >
                         <input
+                          aria-label={`Select privilege: ${getLabel(privilege.label)}`}
                           checked={isSelected}
+                          id={`global-privilege-${privilege.privilegeKey}`}
                           onChange={() => handlePrivilegeToggle(privilege)}
                           style={{ cursor: 'pointer', marginTop: '2px' }}
                           type="checkbox"
@@ -355,7 +380,15 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                               marginBottom: '4px',
                             }}
                           >
-                            {isCustom && <span style={{ fontSize: '16px' }}>⭐</span>}
+                            {isCustom && (
+                              <span
+                                aria-label="Custom privilege"
+                                role="img"
+                                style={{ fontSize: '16px' }}
+                              >
+                                ⭐
+                              </span>
+                            )}
                             {getLabel(privilege.label)}
                           </div>
                           <div
