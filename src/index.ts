@@ -1,11 +1,10 @@
 import type { AcceptedLanguages } from '@payloadcms/translations'
-import type { CollectionConfig, Config } from 'payload'
+import type { CollectionConfig, Config, PayloadRequest, Where } from 'payload'
+
+import type { PluginDefaultTranslationsObject } from './translations/types.js'
 
 import { createRolesCollection } from './collections/roles.js'
 import { translations } from './translations/index.js'
-import type { PluginDefaultTranslationsObject } from './translations/types.js'
-
-import type { PayloadRequest, Where } from 'payload'
 import { customPrivilegesRegistry } from './utils/createCustomPrivilege.js'
 import {
   allGlobalPrivilegesMap,
@@ -24,27 +23,27 @@ import { seedSuperAdminRole } from './utils/seedSuperAdminRole.js'
 /* -------------------------------------------------------------------------- */
 
 export type RolesPrivilegesPayloadPluginConfig = {
-  enable?: boolean
-  disabled?: boolean
-  excludeCollections?: string[]
-  excludeGlobals?: string[]
-  wrapCollectionAccess?: boolean
-  wrapGlobalAccess?: boolean
-  seedSuperAdmin?: boolean
   /**
    * Custom roles collection configuration.
    * If provided, this collection will be used instead of the default one.
    * Use `createRolesCollection` helper to create a base configuration and customize it.
    */
   customRolesCollection?: CollectionConfig
+  disabled?: boolean
+  enable?: boolean
+  excludeCollections?: string[]
+  excludeGlobals?: string[]
+  seedSuperAdmin?: boolean
+  wrapCollectionAccess?: boolean
+  wrapGlobalAccess?: boolean
 }
 
 export * from './exports/types.js'
 export * from './exports/utilities.js'
 
 type AccessArgs = {
-  req: PayloadRequest
   [key: string]: any
+  req: PayloadRequest
 }
 
 type AccessResult = boolean | Where
@@ -65,11 +64,15 @@ const wrapAccess =
     if (original !== undefined) {
       originalResult = typeof original === 'function' ? await original(args) : original
 
-      if (originalResult === false) return false
+      if (originalResult === false) {
+        return false
+      }
     }
 
     const hasPriv = await hasPrivilege(privilegeKey)(args)
-    if (!hasPriv) return false
+    if (!hasPriv) {
+      return false
+    }
 
     return originalResult
   }
@@ -84,14 +87,16 @@ function buildPrivilegesMap(
 
   for (const entry of autoMap.values()) {
     map.set(entry[slugKey], {
-      [slugKey]: entry[slugKey],
       [labelKey]: entry[labelKey],
       privileges: { ...entry.privileges },
+      [slugKey]: entry[slugKey],
     })
   }
 
   for (const custom of customPrivilegesRegistry.values()) {
-    if (custom.type !== type) continue
+    if (custom.type !== type) {
+      continue
+    }
 
     const existing = map.get(custom.slug)
     if (existing) {
@@ -101,9 +106,9 @@ function buildPrivilegesMap(
       }
     } else {
       map.set(custom.slug, {
-        [slugKey]: custom.slug,
         [labelKey]: custom.label,
         privileges: { ...custom.privileges },
+        [slugKey]: custom.slug,
       })
     }
   }
@@ -122,9 +127,9 @@ export const rolesPrivilegesPayloadPlugin =
       enable = true,
       excludeCollections = [],
       excludeGlobals = [],
+      seedSuperAdmin = true,
       wrapCollectionAccess = true,
       wrapGlobalAccess = true,
-      seedSuperAdmin = true,
     } = pluginOptions
 
     if (!enable) {
@@ -245,7 +250,9 @@ export const rolesPrivilegesPayloadPlugin =
 
     if (wrapGlobalAccess) {
       for (const global of config.globals) {
-        if (excludeGlobals.includes(global.slug)) continue
+        if (excludeGlobals.includes(global.slug)) {
+          continue
+        }
 
         global.access ??= {}
         const originalAccess = { ...global.access }
@@ -291,7 +298,9 @@ export const rolesPrivilegesPayloadPlugin =
       const existingGlobals = new Set(allGlobalPrivilegesMap.keys())
 
       for (const slug of Object.keys(payload.globals)) {
-        if (existingGlobals.has(slug) || excludeGlobals.includes(slug)) continue
+        if (existingGlobals.has(slug) || excludeGlobals.includes(slug)) {
+          continue
+        }
 
         const global = (payload.globals as any)[slug]
         if (global?.config) {

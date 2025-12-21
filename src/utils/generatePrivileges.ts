@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+
 import { translations } from '../translations/index.js'
 
 /**
@@ -7,37 +8,37 @@ import { translations } from '../translations/index.js'
 export type PrivilegeType =
   | 'admin'
   | 'create'
+  | 'delete'
   | 'read'
   | 'readVersions'
-  | 'update'
-  | 'delete'
   | 'unlock'
+  | 'update'
 
 /**
  * Interface for a single privilege
  */
 export interface Privilege {
-  privilegeKey: string
-  label: Record<string, string>
   description: Record<string, string>
   isCustom?: boolean
+  label: Record<string, string>
+  privilegeKey: string
 }
 
 /**
  * Interface for a collection's privileges
  */
 export interface CollectionPrivileges {
-  collectionSlug: string
   collectionLabel: Record<string, string>
+  collectionSlug: string
   description: Record<string, string>
   privileges: {
     admin: Privilege
     create: Privilege
+    delete: Privilege
     read: Privilege
     readVersions: Privilege
-    update: Privilege
-    delete: Privilege
     unlock: Privilege
+    update: Privilege
   }
 }
 
@@ -73,7 +74,7 @@ const getSingularLabel = (collection: CollectionConfig): Record<string, string> 
       typeof collection.labels.singular === 'object' &&
       !Array.isArray(collection.labels.singular)
     ) {
-      return collection.labels.singular as Record<string, string>
+      return collection.labels.singular
     }
   }
 
@@ -91,7 +92,7 @@ const getPluralLabel = (collection: CollectionConfig): Record<string, string> =>
       return { _default: collection.labels.plural }
     }
     if (typeof collection.labels.plural === 'object' && !Array.isArray(collection.labels.plural)) {
-      return collection.labels.plural as Record<string, string>
+      return collection.labels.plural
     }
   }
 
@@ -107,8 +108,8 @@ const getOperationPrefix = (operation: PrivilegeType, lang: string): string => {
   const key =
     `privilege-prefix-${operation}` as keyof (typeof langTranslations)['plugin-roles-privileges']
   return (
-    (langTranslations['plugin-roles-privileges'][key] as string) ||
-    (translations.en['plugin-roles-privileges'][key] as string)
+    langTranslations['plugin-roles-privileges'][key] ||
+    translations.en['plugin-roles-privileges'][key]
   )
 }
 
@@ -147,9 +148,9 @@ const getOperationDescriptionTemplate = (
     `privilege-template-${operation}-plural` as keyof (typeof langTranslations)['plugin-roles-privileges']
 
   const template =
-    (langTranslations['plugin-roles-privileges'][templateKey] as string) ||
-    (translations.en['plugin-roles-privileges'][templateKey] as string)
-  const usePlural = (langTranslations['plugin-roles-privileges'][pluralKey] as string) === 'true'
+    langTranslations['plugin-roles-privileges'][templateKey] ||
+    translations.en['plugin-roles-privileges'][templateKey]
+  const usePlural = langTranslations['plugin-roles-privileges'][pluralKey] === 'true'
 
   return { template, usePlural }
 }
@@ -186,9 +187,9 @@ const generatePrivilege = (
   pluralLabel: Record<string, string>,
 ): Privilege => {
   return {
-    privilegeKey: generatePrivilegeKey(collectionSlug, operation),
-    label: getOperationLabels(operation, singularLabel),
     description: getOperationDescriptions(operation, singularLabel, pluralLabel),
+    label: getOperationLabels(operation, singularLabel),
+    privilegeKey: generatePrivilegeKey(collectionSlug, operation),
   }
 }
 
@@ -207,23 +208,23 @@ export const generateCollectionPrivileges = (
     const plural = pluralLabel[lang].toLowerCase()
     const langTranslations = translations[lang] || translations.en
     const template =
-      (langTranslations['plugin-roles-privileges']['privilege-collection-description'] as string) ||
-      (translations.en['plugin-roles-privileges']['privilege-collection-description'] as string)
+      langTranslations['plugin-roles-privileges']['privilege-collection-description'] ||
+      translations.en['plugin-roles-privileges']['privilege-collection-description']
     description[lang] = template.replace('{label}', plural)
   }
 
   const collectionPrivileges: CollectionPrivileges = {
-    collectionSlug: collection.slug,
     collectionLabel: pluralLabel,
+    collectionSlug: collection.slug,
     description,
     privileges: {
       admin: generatePrivilege(collection.slug, 'admin', singularLabel, pluralLabel),
       create: generatePrivilege(collection.slug, 'create', singularLabel, pluralLabel),
+      delete: generatePrivilege(collection.slug, 'delete', singularLabel, pluralLabel),
       read: generatePrivilege(collection.slug, 'read', singularLabel, pluralLabel),
       readVersions: generatePrivilege(collection.slug, 'readVersions', singularLabel, pluralLabel),
-      update: generatePrivilege(collection.slug, 'update', singularLabel, pluralLabel),
-      delete: generatePrivilege(collection.slug, 'delete', singularLabel, pluralLabel),
       unlock: generatePrivilege(collection.slug, 'unlock', singularLabel, pluralLabel),
+      update: generatePrivilege(collection.slug, 'update', singularLabel, pluralLabel),
     },
   }
 

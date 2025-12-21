@@ -8,10 +8,10 @@ import type { Privilege } from './generatePrivileges.js'
 export const customPrivilegesRegistry = new Map<
   string,
   {
-    slug: string
     label: Record<string, string>
+    privileges: Record<string, GlobalPrivilege | Privilege>
+    slug: string
     type: 'collection' | 'global'
-    privileges: Record<string, Privilege | GlobalPrivilege>
   }
 >()
 
@@ -20,19 +20,19 @@ export const customPrivilegesRegistry = new Map<
  */
 export type CustomPrivilegeConfig = {
   /**
-   * Unique key for the privilege (e.g., 'posts-publish', 'users-approve')
+   * Descriptions for the privilege in different languages
+   * @example { en: 'Ability to publish posts', fr: 'Capacité de publier des articles' }
    */
-  privilegeKey: string
+  description: Record<string, string>
   /**
    * Labels for the privilege in different languages
    * @example { en: 'Publish Posts', fr: 'Publier les articles' }
    */
   label: Record<string, string>
   /**
-   * Descriptions for the privilege in different languages
-   * @example { en: 'Ability to publish posts', fr: 'Capacité de publier des articles' }
+   * Unique key for the privilege (e.g., 'posts-publish', 'users-approve')
    */
-  description: Record<string, string>
+  privilegeKey: string
 }
 
 /**
@@ -61,15 +61,15 @@ export const registerCustomPrivilege = (
   collectionOrGlobalSlug: string,
   config: CustomPrivilegeConfig,
   options?: {
-    type?: 'collection' | 'global'
     groupLabel?: Record<string, string>
+    type?: 'collection' | 'global'
   },
 ): Privilege => {
   const privilege: Privilege = {
-    privilegeKey: config.privilegeKey,
-    label: config.label,
     description: config.description,
     isCustom: true,
+    label: config.label,
+    privilegeKey: config.privilegeKey,
   }
 
   // Get or create the group for this collection/global
@@ -78,8 +78,8 @@ export const registerCustomPrivilege = (
   if (!group) {
     group = {
       slug: collectionOrGlobalSlug,
-      label: options?.groupLabel || { _default: collectionOrGlobalSlug },
       type: options?.type || 'collection',
+      label: options?.groupLabel || { _default: collectionOrGlobalSlug },
       privileges: {},
     }
     customPrivilegesRegistry.set(collectionOrGlobalSlug, group)
@@ -119,8 +119,8 @@ export const registerCustomPrivileges = (
   collectionOrGlobalSlug: string,
   configs: CustomPrivilegeConfig[],
   options?: {
-    type?: 'collection' | 'global'
     groupLabel?: Record<string, string>
+    type?: 'collection' | 'global'
   },
 ): Privilege[] => {
   return configs.map((config) => registerCustomPrivilege(collectionOrGlobalSlug, config, options))

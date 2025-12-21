@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+
 import { getAllGlobalPrivileges } from './generateGlobalPrivileges.js'
 import { getAllPrivileges } from './generatePrivileges.js'
 
@@ -22,24 +23,24 @@ export const seedSuperAdminRole = async (payload: Payload): Promise<void> => {
     ] // Check if Super Admin role exists
     const existingRole = await payload.find({
       collection: 'roles',
+      limit: 1,
       where: {
         slug: {
           equals: 'super-admin',
         },
       },
-      limit: 1,
     })
 
     if (existingRole.docs.length > 0) {
       // Update existing Super Admin role
       await payload.update({
-        collection: 'roles',
         id: existingRole.docs[0].id,
+        collection: 'roles',
         data: {
-          title: 'Super Admin',
           slug: 'super-admin',
-          privileges: privilegesArray,
           description: 'Super administrator with full system access and all privileges',
+          privileges: privilegesArray,
+          title: 'Super Admin',
         },
       })
       payload.logger.info('✅ Super Admin role updated with all privileges')
@@ -48,10 +49,10 @@ export const seedSuperAdminRole = async (payload: Payload): Promise<void> => {
       await payload.create({
         collection: 'roles',
         data: {
-          title: 'Super Admin',
           slug: 'super-admin',
-          privileges: privilegesArray,
           description: 'Super administrator with full system access and all privileges',
+          privileges: privilegesArray,
+          title: 'Super Admin',
         },
       })
       payload.logger.info('✅ Super Admin role created with all privileges')

@@ -1,4 +1,5 @@
 import type { GenericTranslationsObject } from '@payloadcms/translations'
+
 import type { PluginDefaultTranslationsObject } from './types.js'
 
 import { enTranslations } from './languages/en.js'
@@ -9,9 +10,12 @@ type TranslationMap = {
 }
 
 export const translations: TranslationMap = {
+  id: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   ar: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   az: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   bg: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
+  bnBd: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
+  bnIn: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   ca: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   cs: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   da: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
@@ -25,7 +29,6 @@ export const translations: TranslationMap = {
   hr: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   hu: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   hy: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
-  id: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   is: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   it: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   ja: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
@@ -51,6 +54,4 @@ export const translations: TranslationMap = {
   vi: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   zh: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
   zhTw: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
-  bnBd: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
-  bnIn: enTranslations as GenericTranslationsObject & PluginDefaultTranslationsObject,
 }

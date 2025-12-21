@@ -3,25 +3,26 @@ import type { ArrayFieldClientComponent } from 'payload'
 
 import { Collapsible, useField, useForm, useFormFields, useTranslation } from '@payloadcms/ui'
 import { memo, useCallback } from 'react'
+
 import type { GlobalPrivilege } from '../utils/generateGlobalPrivileges.js'
 import type { Privilege } from '../utils/generatePrivileges.js'
 
 type CollectionPrivileges = {
-  collectionSlug: string
   collectionLabel: Record<string, string>
+  collectionSlug: string
   privileges: Record<string, Privilege>
 }
 
 type GlobalPrivileges = {
-  globalSlug: string
   globalLabel: Record<string, string>
+  globalSlug: string
   privileges: Record<string, GlobalPrivilege>
 }
 
 type PrivilegesSelectProps = {
-  path: string
   collections: CollectionPrivileges[]
   globals: GlobalPrivileges[]
+  path: string
 }
 
 /**
@@ -33,8 +34,8 @@ type PrivilegesSelectProps = {
  * @param {GlobalPrivileges[]} props.globals - Globals with their privileges
  */
 const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
-  const { path, collections = [], globals = [] } = props as any
-  const { rows } = useField({ path, hasRows: true })
+  const { collections = [], globals = [], path } = props as any
+  const { rows } = useField({ hasRows: true, path })
   const { addFieldRow, removeFieldRow, setModified } = useForm()
   const { dispatch } = useFormFields(([_, dispatch]) => ({ dispatch }))
   const { i18n } = useTranslation()
@@ -67,7 +68,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
     (privilegeKey: string) => {
       // Check collections
       for (const collection of collectionsArray) {
-        for (const privilege of Object.values(collection.privileges) as Privilege[]) {
+        for (const privilege of Object.values(collection.privileges)) {
           if (privilege.privilegeKey === privilegeKey) {
             return getLabel(privilege.label)
           }
@@ -75,7 +76,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
       }
       // Check globals
       for (const global of globalsArray) {
-        for (const privilege of Object.values(global.privileges) as GlobalPrivilege[]) {
+        for (const privilege of Object.values(global.privileges)) {
           if (privilege.privilegeKey === privilegeKey) {
             return getLabel(privilege.label)
           }
@@ -100,7 +101,7 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
    * Handles privilege selection/deselection
    */
   const handlePrivilegeToggle = useCallback(
-    (privilege: Privilege | GlobalPrivilege) => {
+    (privilege: GlobalPrivilege | Privilege) => {
       const privilegeKey = privilege.privilegeKey
       const existingIndex = existingPrivileges.indexOf(privilegeKey)
 
@@ -129,26 +130,25 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
   )
 
   return (
-    <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+    <div style={{ marginBottom: '16px', marginTop: '16px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {/* Collections */}
         {collectionsArray.map((collection: CollectionPrivileges) => {
-          const privileges = Object.values(collection.privileges) as Privilege[]
+          const privileges = Object.values(collection.privileges)
           const selectedCount = privileges.filter((p) => isPrivilegeSelected(p.privilegeKey)).length
 
           return (
             <Collapsible
-              key={collection.collectionSlug}
               header={
                 <div
                   style={{
-                    display: 'flex',
                     alignItems: 'center',
+                    display: 'flex',
                     justifyContent: 'space-between',
                     width: '100%',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
                     <span>📦</span>
                     <span style={{ fontWeight: 500 }}>
                       {getLabel(collection.collectionLabel) || collection.collectionSlug}
@@ -157,12 +157,12 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   {selectedCount > 0 && (
                     <span
                       style={{
-                        padding: '2px 8px',
                         backgroundColor: 'var(--theme-success-100)',
-                        color: 'var(--theme-success-800)',
                         borderRadius: '12px',
+                        color: 'var(--theme-success-800)',
                         fontSize: '12px',
                         fontWeight: 600,
+                        padding: '2px 8px',
                       }}
                     >
                       {selectedCount}
@@ -170,14 +170,15 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   )}
                 </div>
               }
+              key={collection.collectionSlug}
             >
               <div
                 style={{
-                  padding: '16px',
                   backgroundColor: 'var(--theme-elevation-50)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '12px',
+                  padding: '16px',
                 }}
               >
                 {privileges.map((privilege) => {
@@ -187,39 +188,39 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                     <div
                       key={privilege.privilegeKey}
                       style={{
-                        padding: '12px',
                         backgroundColor: 'var(--theme-elevation-0)',
                         border: `1px solid ${
                           isSelected ? 'var(--theme-success-300)' : 'var(--theme-elevation-300)'
                         }`,
                         borderRadius: '4px',
+                        padding: '12px',
                         transition: 'all 0.2s',
                       }}
                     >
                       <label
                         style={{
-                          display: 'flex',
                           alignItems: 'flex-start',
-                          gap: '12px',
                           cursor: 'pointer',
+                          display: 'flex',
+                          gap: '12px',
                         }}
                       >
                         <input
-                          type="checkbox"
                           checked={isSelected}
                           onChange={() => handlePrivilegeToggle(privilege)}
-                          style={{ marginTop: '2px', cursor: 'pointer' }}
+                          style={{ cursor: 'pointer', marginTop: '2px' }}
+                          type="checkbox"
                         />
                         <div style={{ flex: 1 }}>
                           <div
                             style={{
-                              fontWeight: 600,
-                              fontSize: '14px',
-                              color: 'var(--theme-elevation-1000)',
-                              marginBottom: '4px',
-                              display: 'flex',
                               alignItems: 'center',
+                              color: 'var(--theme-elevation-1000)',
+                              display: 'flex',
+                              fontSize: '14px',
+                              fontWeight: 600,
                               gap: '6px',
+                              marginBottom: '4px',
                             }}
                           >
                             {isCustom && <span style={{ fontSize: '16px' }}>⭐</span>}
@@ -227,8 +228,8 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                           </div>
                           <div
                             style={{
-                              fontSize: '13px',
                               color: 'var(--theme-elevation-700)',
+                              fontSize: '13px',
                               lineHeight: '1.4',
                               marginBottom: '8px',
                             }}
@@ -237,17 +238,17 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                           </div>
                           <div
                             style={{
-                              padding: '4px 8px',
                               backgroundColor: isCustom
                                 ? 'var(--theme-warning-100)'
                                 : 'var(--theme-elevation-100)',
                               borderRadius: '4px',
-                              fontSize: '11px',
-                              fontFamily: 'monospace',
                               color: isCustom
                                 ? 'var(--theme-warning-900)'
                                 : 'var(--theme-elevation-800)',
                               display: 'inline-block',
+                              fontFamily: 'monospace',
+                              fontSize: '11px',
+                              padding: '4px 8px',
                             }}
                           >
                             {isCustom && '⭐ '}
@@ -265,22 +266,21 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
 
         {/* Globals */}
         {globalsArray.map((global: GlobalPrivileges) => {
-          const privileges = Object.values(global.privileges) as GlobalPrivilege[]
+          const privileges = Object.values(global.privileges)
           const selectedCount = privileges.filter((p) => isPrivilegeSelected(p.privilegeKey)).length
 
           return (
             <Collapsible
-              key={global.globalSlug}
               header={
                 <div
                   style={{
-                    display: 'flex',
                     alignItems: 'center',
+                    display: 'flex',
                     justifyContent: 'space-between',
                     width: '100%',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
                     <span>🌐</span>
                     <span style={{ fontWeight: 500 }}>
                       {getLabel(global.globalLabel) || global.globalSlug}
@@ -289,12 +289,12 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   {selectedCount > 0 && (
                     <span
                       style={{
-                        padding: '2px 8px',
                         backgroundColor: 'var(--theme-success-100)',
-                        color: 'var(--theme-success-800)',
                         borderRadius: '12px',
+                        color: 'var(--theme-success-800)',
                         fontSize: '12px',
                         fontWeight: 600,
+                        padding: '2px 8px',
                       }}
                     >
                       {selectedCount}
@@ -302,14 +302,15 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                   )}
                 </div>
               }
+              key={global.globalSlug}
             >
               <div
                 style={{
-                  padding: '16px',
                   backgroundColor: 'var(--theme-elevation-50)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '12px',
+                  padding: '16px',
                 }}
               >
                 {privileges.map((privilege) => {
@@ -319,39 +320,39 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                     <div
                       key={privilege.privilegeKey}
                       style={{
-                        padding: '12px',
                         backgroundColor: 'var(--theme-elevation-0)',
                         border: `1px solid ${
                           isSelected ? 'var(--theme-success-300)' : 'var(--theme-elevation-300)'
                         }`,
                         borderRadius: '4px',
+                        padding: '12px',
                         transition: 'all 0.2s',
                       }}
                     >
                       <label
                         style={{
-                          display: 'flex',
                           alignItems: 'flex-start',
-                          gap: '12px',
                           cursor: 'pointer',
+                          display: 'flex',
+                          gap: '12px',
                         }}
                       >
                         <input
-                          type="checkbox"
                           checked={isSelected}
                           onChange={() => handlePrivilegeToggle(privilege)}
-                          style={{ marginTop: '2px', cursor: 'pointer' }}
+                          style={{ cursor: 'pointer', marginTop: '2px' }}
+                          type="checkbox"
                         />
                         <div style={{ flex: 1 }}>
                           <div
                             style={{
-                              fontWeight: 600,
-                              fontSize: '14px',
-                              color: 'var(--theme-elevation-1000)',
-                              marginBottom: '4px',
-                              display: 'flex',
                               alignItems: 'center',
+                              color: 'var(--theme-elevation-1000)',
+                              display: 'flex',
+                              fontSize: '14px',
+                              fontWeight: 600,
                               gap: '6px',
+                              marginBottom: '4px',
                             }}
                           >
                             {isCustom && <span style={{ fontSize: '16px' }}>⭐</span>}
@@ -359,8 +360,8 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                           </div>
                           <div
                             style={{
-                              fontSize: '13px',
                               color: 'var(--theme-elevation-700)',
+                              fontSize: '13px',
                               lineHeight: '1.4',
                               marginBottom: '8px',
                             }}
@@ -369,17 +370,17 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
                           </div>
                           <div
                             style={{
-                              padding: '4px 8px',
                               backgroundColor: isCustom
                                 ? 'var(--theme-warning-100)'
                                 : 'var(--theme-elevation-100)',
                               borderRadius: '4px',
-                              fontSize: '11px',
-                              fontFamily: 'monospace',
                               color: isCustom
                                 ? 'var(--theme-warning-900)'
                                 : 'var(--theme-elevation-800)',
                               display: 'inline-block',
+                              fontFamily: 'monospace',
+                              fontSize: '11px',
+                              padding: '4px 8px',
                             }}
                           >
                             {isCustom && '⭐ '}
@@ -400,18 +401,18 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
       {existingPrivileges.length > 0 && (
         <div
           style={{
-            marginTop: '16px',
-            padding: '16px',
             backgroundColor: 'var(--theme-elevation-100)',
             borderRadius: '4px',
+            marginTop: '16px',
+            padding: '16px',
           }}
         >
           <h5
             style={{
-              margin: '0 0 12px 0',
+              color: 'var(--theme-elevation-1000)',
               fontSize: '14px',
               fontWeight: 600,
-              color: 'var(--theme-elevation-1000)',
+              margin: '0 0 12px 0',
             }}
           >
             {(i18n.t as (key: string) => string)(
@@ -424,35 +425,35 @@ const PrivilegesSelect: ArrayFieldClientComponent = (props) => {
               <div
                 key={`${privilegeKey}-${index}`}
                 style={{
-                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '6px 12px',
                   backgroundColor: 'var(--theme-success-100)',
                   border: '1px solid var(--theme-success-300)',
                   borderRadius: '16px',
-                  fontSize: '12px',
                   color: 'var(--theme-success-800)',
+                  display: 'inline-flex',
+                  fontSize: '12px',
+                  gap: '8px',
+                  padding: '6px 12px',
                 }}
               >
                 <span>{getPrivilegeLabel(privilegeKey)}</span>
                 <button
-                  type="button"
                   onClick={() => {
                     removeFieldRow({ path, rowIndex: index })
                     setModified(true)
                   }}
                   style={{
+                    alignItems: 'center',
                     background: 'none',
                     border: 'none',
                     color: 'var(--theme-success-600)',
                     cursor: 'pointer',
-                    padding: 0,
                     display: 'flex',
-                    alignItems: 'center',
                     fontSize: '16px',
                     lineHeight: 1,
+                    padding: 0,
                   }}
+                  type="button"
                 >
                   ×
                 </button>
