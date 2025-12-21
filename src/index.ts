@@ -242,9 +242,25 @@ export const rolesPrivilegesPayloadPlugin =
         userCollection.fields.push({
           name: rolesFieldName,
           type: 'relationship',
+          access: {
+            create: async (args) => {
+              const result = await hasPrivilege('roles-update')(args)
+              return typeof result === 'boolean' ? result : true
+            },
+            read: async (args) => {
+              const result = await hasPrivilege('roles-read')(args)
+              return typeof result === 'boolean' ? result : true
+            },
+            update: async (args) => {
+              const result = await hasPrivilege('roles-update')(args)
+              return typeof result === 'boolean' ? result : true
+            },
+          },
           admin: {
             description: ({ t }) =>
-              (t as (key: string) => string)('plugin-roles-privileges:user-roles-field-description'),
+              (t as (key: string) => string)(
+                'plugin-roles-privileges:user-roles-field-description',
+              ),
           },
           hasMany: true,
           relationTo: 'roles',
