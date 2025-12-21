@@ -315,8 +315,8 @@ export const rolesPrivilegesPayloadPlugin =
     for (const locale of Object.keys(translations) as AcceptedLanguages[]) {
       const pluginBlock = translations[locale]['plugin-roles-privileges']
 
-      config.i18n.translations[locale] ??= {}
-      ;(config.i18n.translations[locale] as PluginDefaultTranslationsObject)[
+      ;(config.i18n.translations as any)[locale] ??= {}
+      ;((config.i18n.translations as any)[locale] as PluginDefaultTranslationsObject)[
         'plugin-roles-privileges'
       ] = {
         ...pluginBlock,
