@@ -23,52 +23,52 @@ if (!process.env.ROOT_DIR) {
 
 // Register custom privileges for posts collection
 const publishPrivilege = registerCustomPrivilege('posts', {
-  privilegeKey: 'posts-publish',
-  label: {
-    en: 'Publish Posts',
-    fr: 'Publier les articles',
-  },
   description: {
     en: 'Ability to publish posts to make them publicly visible',
     fr: 'Capacité de publier des articles pour les rendre publiquement visibles',
   },
+  label: {
+    en: 'Publish Posts',
+    fr: 'Publier les articles',
+  },
+  privilegeKey: 'posts-publish',
 })
 
 const featurePrivilege = registerCustomPrivilege('posts', {
-  privilegeKey: 'posts-feature',
-  label: {
-    en: 'Feature Posts',
-    fr: 'Mettre en vedette les articles',
-  },
   description: {
     en: 'Ability to feature posts on the homepage',
     fr: "Capacité de mettre en vedette des articles sur la page d'accueil",
   },
+  label: {
+    en: 'Feature Posts',
+    fr: 'Mettre en vedette les articles',
+  },
+  privilegeKey: 'posts-feature',
 })
 
 // Register multiple custom privileges at once for site-settings global
 const siteSettingsPrivileges = registerCustomPrivileges('site-settings', [
   {
-    privilegeKey: 'site-settings-manage-logo',
-    label: {
-      en: 'Manage Logo',
-      fr: 'Gérer le logo',
-    },
     description: {
       en: 'Ability to update the site logo',
       fr: 'Capacité de mettre à jour le logo du site',
     },
+    label: {
+      en: 'Manage Logo',
+      fr: 'Gérer le logo',
+    },
+    privilegeKey: 'site-settings-manage-logo',
   },
   {
-    privilegeKey: 'site-settings-change-name',
-    label: {
-      en: 'Change Site Name',
-      fr: 'Changer le nom du site',
-    },
     description: {
       en: 'Ability to modify the site name',
       fr: 'Capacité de modifier le nom du site',
     },
+    label: {
+      en: 'Change Site Name',
+      fr: 'Changer le nom du site',
+    },
+    privilegeKey: 'site-settings-change-name',
   },
 ])
 
@@ -104,10 +104,6 @@ const buildConfigWithMemoryDB = async () => {
       },
       {
         slug: 'posts',
-        labels: {
-          singular: { en: 'Blog Post', fr: 'Article de blog' },
-          plural: { en: 'Blog Posts', fr: 'Articles de blog' },
-        },
         fields: [
           {
             name: 'title',
@@ -121,30 +117,34 @@ const buildConfigWithMemoryDB = async () => {
           {
             name: 'status',
             type: 'select',
-            options: ['draft', 'published'],
-            defaultValue: 'draft',
             access: {
               // Only users with the custom publish privilege can set status to published
-              update: ({ req, data }) => {
+              update: ({ data, req }) => {
                 if (data?.status === 'published') {
                   return checkPrivilege(publishPrivilege.privilegeKey, req.user)
                 }
                 return true
               },
             },
+            defaultValue: 'draft',
+            options: ['draft', 'published'],
           },
           {
             name: 'featured',
             type: 'checkbox',
-            defaultValue: false,
             access: {
               // Only users with the custom feature privilege can mark posts as featured
               update: ({ req }) => {
                 return checkPrivilege(featurePrivilege.privilegeKey, req.user)
               },
             },
+            defaultValue: false,
           },
         ],
+        labels: {
+          plural: { en: 'Blog Posts', fr: 'Articles de blog' },
+          singular: { en: 'Blog Post', fr: 'Article de blog' },
+        },
       },
       {
         slug: 'pages',
@@ -169,33 +169,39 @@ const buildConfigWithMemoryDB = async () => {
         },
       },
     ],
+    db: mongooseAdapter({
+      ensureIndexes: true,
+      url: process.env.DATABASE_URI || '',
+    }),
+    editor: lexicalEditor(),
+    email: testEmailAdapter,
     globals: [
       {
         slug: 'site-settings',
-        label: {
-          en: 'Site Settings',
-          fr: 'Paramètres du site',
-        },
         fields: [
           {
             name: 'siteName',
             type: 'text',
-            required: true,
             access: {
               // Only users with the custom change-name privilege can update the site name
               update: ({ req }) => checkPrivilege(siteSettingsPrivileges[1].privilegeKey, req.user),
             },
+            required: true,
           },
           {
             name: 'logo',
             type: 'upload',
-            relationTo: 'media',
             access: {
               // Only users with the custom manage-logo privilege can update the logo
               update: ({ req }) => checkPrivilege(siteSettingsPrivileges[0].privilegeKey, req.user),
             },
+            relationTo: 'media',
           },
         ],
+        label: {
+          en: 'Site Settings',
+          fr: 'Paramètres du site',
+        },
       },
       {
         slug: 'header',
@@ -213,16 +219,10 @@ const buildConfigWithMemoryDB = async () => {
         ],
       },
     ],
-    db: mongooseAdapter({
-      ensureIndexes: true,
-      url: process.env.DATABASE_URI || '',
-    }),
-    editor: lexicalEditor(),
-    email: testEmailAdapter,
-    onInit: async (payload) => {
-      const { seed } = await import('./seed.js')
-      await seed(payload)
-    },
+    // onInit: async (payload) => {
+    //   const { seed } = await import('./seed.js')
+    //   await seed(payload)
+    // },
     plugins: [
       rolesPrivilegesPayloadPlugin({
         // Exclude media from automatic privilege wrapping

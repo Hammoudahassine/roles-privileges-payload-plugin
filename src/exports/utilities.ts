@@ -13,11 +13,12 @@ export {
 
 // Re-export custom privilege registration utilities
 export {
+  type CustomGlobalPrivilege,
+  type CustomPrivilegeConfig,
   customPrivilegesRegistry,
   registerCustomPrivilege,
   registerCustomPrivileges,
-  type CustomGlobalPrivilege,
-  type CustomPrivilegeConfig,
+
 } from '../utils/createCustomPrivilege.js'
 
 // Re-export global privilege utilities
