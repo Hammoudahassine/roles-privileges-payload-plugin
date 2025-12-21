@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/compare/v1.2.0...v1.2.1) (2025-12-21)
+
+
+### Bug Fixes
+
+* change absolute import to relative import to fix module resolution in built package ([83e0d8a](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/commit/83e0d8ae56275ac43b992c6e3bfa8b8bfbd3cf91))
+
 # [1.2.0](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/compare/v1.1.1...v1.2.0) (2025-12-21)
 
 
