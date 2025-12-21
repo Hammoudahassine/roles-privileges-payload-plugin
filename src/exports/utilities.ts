@@ -7,7 +7,7 @@ export {
 
 // Re-export first user super admin assignment utilities
 export {
-  assignSuperAdminToFirstUser,
+  createAssignSuperAdminToFirstUserHook,
   wrapUserCollectionWithSuperAdminHook,
 } from '../utils/assignSuperAdminToFirstUser.js'
 
