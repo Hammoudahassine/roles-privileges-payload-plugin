@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/compare/v1.1.0...v1.1.1) (2025-12-20)
+
+
+### Bug Fixes
+
+* resolve ESLint configuration error with no-unused-expressions rule ([eb3b959](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/commit/eb3b959fd08e2615d47e7a32bf799e6bb7cff04f))
+
 # [1.1.0](https://github.com/Hammoudahassine/roles-privileges-payload-plugin/compare/v1.0.2...v1.1.0) (2025-12-20)
 
 
