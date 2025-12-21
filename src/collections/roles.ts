@@ -5,11 +5,11 @@ import type {
 } from 'payload'
 
 import { APIError } from 'payload'
-import { slugField } from 'src/fields/slug/index.js'
 
 import type { GlobalPrivilege } from '../utils/generateGlobalPrivileges.js'
 import type { Privilege } from '../utils/generatePrivileges.js'
 
+import { slugField } from '../fields/slug/index.js'
 import { hasPrivilege } from '../utils/privilegesAccess.js'
 
 export type CollectionData = {
