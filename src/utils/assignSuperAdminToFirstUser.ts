@@ -1,10 +1,12 @@
 import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
 
 /**
- * Hook to assign the Super Admin role to the first user created in the system
+ * Create a hook to assign the Super Admin role to the first user created in the system
  * This ensures that the initial user has full access to configure the system
  */
-export const assignSuperAdminToFirstUser: CollectionAfterChangeHook = async ({
+export const createAssignSuperAdminToFirstUserHook = (
+  rolesFieldName: string = 'roles',
+): CollectionAfterChangeHook => async ({
   collection,
   doc,
   operation,
@@ -44,7 +46,7 @@ export const assignSuperAdminToFirstUser: CollectionAfterChangeHook = async ({
           collection: collection.slug,
           data: {
             ...doc,
-            roles: [roleId],
+            [rolesFieldName]: [roleId],
           },
         })
 
@@ -71,6 +73,7 @@ export const assignSuperAdminToFirstUser: CollectionAfterChangeHook = async ({
  */
 export const wrapUserCollectionWithSuperAdminHook = (
   collection: CollectionConfig,
+  rolesFieldName: string = 'roles',
 ): CollectionConfig => {
   const existingAfterChange = collection.hooks?.afterChange || []
   const afterChangeArray = Array.isArray(existingAfterChange)
@@ -81,7 +84,7 @@ export const wrapUserCollectionWithSuperAdminHook = (
     ...collection,
     hooks: {
       ...collection.hooks,
-      afterChange: [...afterChangeArray, assignSuperAdminToFirstUser],
+      afterChange: [...afterChangeArray, createAssignSuperAdminToFirstUserHook(rolesFieldName)],
     },
   }
 }

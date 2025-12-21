@@ -39,6 +39,11 @@ export type RolesPrivilegesPayloadPluginConfig = {
   enable?: boolean
   excludeCollections?: string[]
   excludeGlobals?: string[]
+  /**
+   * Name of the roles field to add to the user collection
+   * @default 'roles'
+   */
+  rolesFieldName?: string
   seedSuperAdmin?: boolean
   wrapCollectionAccess?: boolean
   wrapGlobalAccess?: boolean
@@ -134,6 +139,7 @@ export const rolesPrivilegesPayloadPlugin =
       enable = true,
       excludeCollections = [],
       excludeGlobals = [],
+      rolesFieldName = 'roles',
       seedSuperAdmin = true,
       wrapCollectionAccess = true,
       wrapGlobalAccess = true,
@@ -219,19 +225,38 @@ export const rolesPrivilegesPayloadPlugin =
     /*                    First user super admin assignment                     */
     /* ---------------------------------------------------------------------- */
 
-    if (assignSuperAdminToFirstUser) {
-      // Find the user collection from config.admin.user
-      const userCollectionSlug = config.admin?.user || 'users'
+    // Find the user collection from config.admin.user
+    const userCollectionSlug = config.admin?.user || 'users'
+    const userCollectionIndex = config.collections.findIndex((c) => c.slug === userCollectionSlug)
 
-      // Find and wrap the user collection
-      const userCollectionIndex = config.collections.findIndex((c) => c.slug === userCollectionSlug)
+    if (userCollectionIndex !== -1) {
+      const userCollection = config.collections[userCollectionIndex]
 
-      if (userCollectionIndex !== -1) {
+      // Check if roles field already exists
+      const hasRolesField = userCollection.fields.some(
+        (field) => 'name' in field && field.name === rolesFieldName,
+      )
+
+      // Add roles field if it doesn't exist
+      if (!hasRolesField) {
+        userCollection.fields.push({
+          name: rolesFieldName,
+          type: 'relationship',
+          admin: {
+            description: 'Roles assigned to this user',
+          },
+          hasMany: true,
+          relationTo: 'roles',
+        })
+      }
+
+      // Wrap with super admin hook if enabled
+      if (assignSuperAdminToFirstUser) {
         config.collections[userCollectionIndex] = wrapUserCollectionWithSuperAdminHook(
-          config.collections[userCollectionIndex],
+          userCollection,
+          rolesFieldName,
         )
       }
-      // If user collection not found, the hook simply won't be applied
     }
 
     if (pluginOptions.disabled) {
