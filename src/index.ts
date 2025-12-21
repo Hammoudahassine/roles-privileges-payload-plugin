@@ -243,7 +243,8 @@ export const rolesPrivilegesPayloadPlugin =
           name: rolesFieldName,
           type: 'relationship',
           admin: {
-            description: 'Roles assigned to this user',
+            description: ({ t }) =>
+              (t as (key: string) => string)('plugin-roles-privileges:user-roles-field-description'),
           },
           hasMany: true,
           relationTo: 'roles',

@@ -12,6 +12,7 @@ export const enTranslations: PluginTranslations = {
     'roles-field-slug-description': 'Unique identifier for this role',
     'roles-field-slug-label': 'Slug',
     'roles-field-title-label': 'Role Title',
+    'user-roles-field-description': 'Roles assigned to this user',
 
     // Privileges UI
     'privileges-column-collections-globals': 'Collections & Globals',
